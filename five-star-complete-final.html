@@ -39,8 +39,8 @@
         .nav-reporting .nav-button.active { background: linear-gradient(135deg, #4a8cb5 0%, #3a6d99 50%, #2a4d79 100%); border-color: #1a2d59; box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 2px 4px rgba(0,0,0,0.2); transform: translateY(1px); }
 
         .container { max-width: 1300px; margin: 0 auto; padding: 1.5rem 1rem; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .tab-content { display: none !important; }
+        .tab-content.active { display: block !important; visibility: visible !important; }
 
         .card { background: white; border-left: 4px solid #5BA3D0; padding: 1.5rem; margin-bottom: 1.25rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         h2 { font-size: 1.75rem; margin-bottom: 1rem; color: #0f172a; }
@@ -118,21 +118,15 @@
         <p style="font-size: 1.8rem; letter-spacing: 0.3rem; margin: 0.5rem 0 0 0; color: #ec4899;">★★★★★</p>
         <p class="subtitle">Knoxville Chapter - 2025-2026</p>
         <p class="meta">Deadline: May 27, 2026</p>
-        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.3);">
-            <label style="color: white; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 500;">
-                <input type="checkbox" id="test-mode-toggle" onchange="toggleTestMode()"> 🧪 Test Mode
-            </label>
-            <span id="test-mode-indicator" style="margin-left: 1rem; font-size: 0.9rem; color: #ecfdf5; font-weight: 600;"></span>
-        </div>
     </div>
 
     <div class="nav">
         <div class="nav-section">
             <div class="nav-section-title">📝 Data Collection</div>
             <div class="nav-buttons-group nav-data-collection">
-                <button class="nav-button active" onclick="switchTab(event, 'mothers')">Mothers</button>
+                <button class="nav-button active" onclick="switchTab(event, 'attendance')">Child Attendance</button>
+                <button class="nav-button" onclick="switchTab(event, 'mothers')">Mothers</button>
                 <button class="nav-button" onclick="switchTab(event, 'meetings')">Meetings</button>
-                <button class="nav-button" onclick="switchTab(event, 'attendance')">Child Attendance</button>
             </div>
         </div>
 
@@ -150,18 +144,20 @@
         <div class="nav-section">
             <div class="nav-section-title">📊 Reporting & Evidence</div>
             <div class="nav-buttons-group nav-reporting">
-                <button class="nav-button" onclick="switchTab(event, 'dashboard')">Dashboard</button>
                 <button class="nav-button" onclick="switchTab(event, 'activity')">Child Activity Summary</button>
+                <button class="nav-button" onclick="switchTab(event, 'attendance-details')">Attendance Details</button>
+                <button class="nav-button" onclick="switchTab(event, 'dashboard')">Dashboard</button>
                 <button class="nav-button" onclick="switchTab(event, 'missing-data')">Missing Data Report</button>
                 <button class="nav-button" onclick="switchTab(event, 'reminders')">🔔 Automated Reminders</button>
             </div>
         </div>
     </div>
 
+    
     <div class="container">
 
         <!-- MOTHER PARTICIPATION TAB -->
-        <div id="mothers" class="tab-content active">
+        <div id="mothers" class="tab-content">
             <div style="padding: 0; max-width: 1400px; margin: 0 auto;">
                 <h2 style="padding: 0 1.5rem; margin-bottom: 0.5rem;">Mother Participation Tracker</h2>
 
@@ -263,16 +259,12 @@
         </div>
 
         <!-- CHILD ATTENDANCE TAB -->
-        <div id="attendance" class="tab-content">
+        <div id="attendance" class="tab-content active">
             <div class="card">
                 <h2>Child Attendance Form</h2>
 
-                <!-- MOTHER SELECTOR -->
-                <div class="form-group">
-                    <label for="attendance-mother-selector" style="margin-bottom: 0.75rem;">👩‍👧 Your Name (Mother)</label>
-                    <select id="attendance-mother-selector" onchange="onAttendanceMotherSelected()" style="font-size: 1.05rem; padding: 0.85rem;">
-                        <option value="">-- Choose a Mother --</option>
-                    </select>
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 1.25rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+                    <p style="color: #166534; margin: 0; font-weight: 600;">📌 Database Status: <span id="db-status" style="color: #ef4444;">Checking connection...</span></p>
                 </div>
 
                 <div class="alert">
@@ -280,8 +272,12 @@
                     <div class="alert-text"><strong>Multiple children?</strong> Select yourself first → choose child → check activities → submit. The form will reset for your next child. Repeat for each of your children.</div>
                 </div>
 
-                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 1.25rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
-                    <p style="color: #166534; margin: 0; font-weight: 600;">📌 Database Status: <span id="db-status" style="color: #ef4444;">Checking connection...</span></p>
+                <!-- MOTHER SELECTOR -->
+                <div class="form-group">
+                    <label for="attendance-mother-selector" style="margin-bottom: 0.75rem;">👩‍👧 Your Name (Mother)</label>
+                    <select id="attendance-mother-selector" onchange="onAttendanceMotherSelected()" style="font-size: 1.05rem; padding: 0.85rem;">
+                        <option value="">-- Choose a Mother --</option>
+                    </select>
                 </div>
 
                 <form onsubmit="handleAttendanceSubmit(event)">
@@ -379,7 +375,7 @@
                         <div style="background: #f1f5f9; padding: 1.25rem; border-radius: 0.375rem; max-height: 400px; overflow-y: auto;">
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
                                 <!-- August 2025 -->
-                                <label style="display: flex; align-items: center; font-weight: normal;"><input type="checkbox" name="activities" value="Urban League Shoes For School (August 2025)"> Urban League Shoes For School (August 2025)</label>
+                                <label style="display: flex; align-items: center; font-weight: normal;"><input type="checkbox" name="activities" value="Urban League Shoes For School (WW PI TNT RT - August 2025)"> Urban League Shoes For School (WW PI TNT RT - August 2025)</label>
 
                                 <!-- September 2025 -->
                                 <label style="display: flex; align-items: center; font-weight: normal;"><input type="checkbox" name="activities" value="Carole Robertson/Jack & Jill Day - Sickle Cell Awareness & Blood Drive (WW PI TNT RT - September 2025)"> Carole Robertson/Jack & Jill Day - Sickle Cell Awareness & Blood Drive (WW PI TNT RT - September 2025)</label>
@@ -403,6 +399,7 @@
                                 <label style="display: flex; align-items: center; font-weight: normal;"><input type="checkbox" name="activities" value="Childrens Literacy Gala/Black History (WW PI TNT RT - February 2026)"> Childrens Literacy Gala/Black History (WW PI TNT RT - February 2026)</label>
 
                                 <!-- March 2026 -->
+                                <label style="display: flex; align-items: center; font-weight: normal;"><input type="checkbox" name="activities" value="The Making Money Moves Experience (TNT RT - March 2026)"> The Making Money Moves Experience (TNT RT - March 2026)</label>
                                 <label style="display: flex; align-items: center; font-weight: normal;"><input type="checkbox" name="activities" value="Fitness/Health/Field Day & Amyloidosis Awareness (WW PI - March 2026)"> Fitness/Health/Field Day & Amyloidosis Awareness (WW PI - March 2026)</label>
 
                                 <!-- April 2026 -->
@@ -1030,7 +1027,6 @@
                             <button onclick="downloadDashboard('csv')" style="background: #10b981; padding: 0.65rem; font-size: 0.9rem;">📊 CSV Export</button>
                             <button onclick="printDashboard()" style="background: #8b5cf6; padding: 0.65rem; font-size: 0.9rem;">🖨️ Print</button>
                         </div>
-                        <button onclick="loadSampleData()" style="width: 100%; background: #94a3b8; padding: 0.65rem; font-size: 0.85rem;">📋 Load Sample Data</button>
                     </div>
                 </div>
 
@@ -1105,14 +1101,6 @@
             <div style="padding: 0; max-width: 1400px; margin: 0 auto;">
                 <h2 style="padding: 0 1.5rem; margin-bottom: 0.75rem;">Child Activity Summary</h2>
 
-                <!-- AREA WORKDAY BOX - TOP -->
-                <div style="padding: 0 1.5rem; margin-bottom: 1.25rem;">
-                    <div style="background: #fef3c7; border: 1px solid #fcd34d; padding: 0.75rem; border-radius: 0.375rem; text-align: center; max-width: 400px;">
-                        <p style="color: #78350f; font-weight: 600; margin: 0; font-size: 0.9rem;">Mothers Area Workday</p>
-                        <p style="color: #92400e; font-size: 1.3rem; margin: 0.25rem 0 0 0; font-weight: 700;"><span id="workday-pct-activity">0%</span> participation</p>
-                    </div>
-                </div>
-
                 <!-- MAIN CARD -->
                 <div class="card" style="margin-bottom: 0;">
                     <p style="margin-bottom: 1rem; color: #64748b;">Prepopulated from Child Attendance entries. Shows participation by age group across all activities.</p>
@@ -1142,6 +1130,26 @@
 
                 <div style="background: #fef3c7; border: 1px solid #fcd34d; padding: 1.25rem; border-radius: 0.5rem; margin-top: 1.5rem;">
                     <p style="color: #78350f; font-weight: 600;">✓ Target for M1: Each activity needs ≥50% attendance per age group</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATTENDANCE DETAILS REPORT TAB -->
+        <div id="attendance-details" class="tab-content">
+            <div style="padding: 0; max-width: 1400px; margin: 0 auto;">
+                <h2 style="padding: 0 1.5rem; margin-bottom: 0.75rem;">📋 Attendance Details by Child Name</h2>
+
+                <div class="card" style="margin-bottom: 0;">
+                    <p style="margin-bottom: 1rem; color: #64748b;">Complete list of children who attended each activity, organized by age group.</p>
+
+                    <div style="margin-bottom: 2rem; display: flex; gap: 1rem;">
+                        <button onclick="printAttendanceDetails()" style="background: #8b5cf6; padding: 0.75rem 1.5rem;">🖨️ Print Report</button>
+                        <button onclick="downloadAttendanceDetailsCSV()" style="background: #10b981; padding: 0.75rem 1.5rem;">📊 Download CSV</button>
+                    </div>
+
+                    <div id="attendance-details-container" style="background: #f8fafc; padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #5BA3D0;">
+                        <p style="color: #64748b; text-align: center; margin: 2rem 0;">Loading attendance data...</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1213,32 +1221,86 @@
 
         <!-- MISSING DATA REPORT TAB -->
         <div id="missing-data" class="tab-content">
-            <div class="card">
-                <h2>Missing Data Report - Follow-Up Checklist</h2>
-                <p style="margin-bottom: 1.5rem; color: #64748b;">Track which moms and children still need to enter data</p>
+            <div class="card" style="display: block; visibility: visible; background: white;">
+                <h2 style="display: block; color: #0f172a;">Missing Data Report - Follow-Up Checklist</h2>
+                <p style="margin-bottom: 1.5rem; color: #64748b; display: block;">Track which mothers and children still need to enter data</p>
 
-                <div style="margin-bottom: 2rem;">
-                    <h3 style="margin-bottom: 1rem;">👩 Mothers with No Participation Data Entered</h3>
-                    <p style="color: #64748b; margin-bottom: 1rem;">These mothers haven't checked ANY boxes for Mothers Area Workday, Mothers Regional Conference, or National Convention</p>
-                    <div id="missing-mothers-list" style="background: #fef3c7; padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #f59e0b;"></div>
+                <div style="margin-bottom: 2rem; display: block;">
+                    <h3 style="margin-bottom: 1rem; display: block; color: #1e293b;">👶 Children with Zero Attendance</h3>
+                    <p style="color: #64748b; margin-bottom: 1rem; display: block;">These children have no attendance recorded across any activities</p>
+                    <div id="missing-children-list" style="background: #fee2e2; padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #ef4444; min-height: 50px; display: block !important; visibility: visible !important; color: #1e293b; width: 100% !important; overflow: visible !important;">
+                        <p style="color: #1e293b; margin: 0; display: block;">Loading...</p>
+                    </div>
                 </div>
 
-                <div style="margin-bottom: 2rem;">
-                    <h3 style="margin-bottom: 1rem;">👶 Children with Zero Attendance</h3>
-                    <p style="color: #64748b; margin-bottom: 1rem;">These children have no attendance recorded across any activities</p>
-                    <div id="missing-children-list" style="background: #fee2e2; padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #ef4444;"></div>
+                <div style="margin-bottom: 2rem; display: block !important; width: 100% !important;">
+                    <h3 style="margin-bottom: 1rem; display: block; color: #1e293b;">📋 Mothers with Children Missing Attendance Data</h3>
+                    <p style="color: #64748b; margin-bottom: 1rem; display: block;">These mothers have at least one child with no attendance entered</p>
+                    <div id="mothers-missing-child-attendance-list" style="background: #dbeafe; padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #3b82f6; min-height: 50px; display: block !important; visibility: visible !important; color: #1e293b; width: 100% !important; overflow: visible !important;">
+                        <p style="color: #1e293b; margin: 0; display: block;">Loading...</p>
+                    </div>
                 </div>
 
-                <div>
-                    <h3 style="margin-bottom: 1rem;">📋 Mothers with Children Missing Attendance Data</h3>
-                    <p style="color: #64748b; margin-bottom: 1rem;">These mothers have at least one child with no attendance entered</p>
-                    <div id="mothers-missing-child-attendance-list" style="background: #dbeafe; padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #3b82f6;"></div>
-                </div>
-
-                <button onclick="generateMissingDataReport()" style="margin-top: 2rem; width: 100%;">🔄 Refresh Report</button>
+                <button onclick="generateMissingDataReport()" style="margin-top: 2rem; width: 100%; display: block;">🔄 Refresh Report</button>
             </div>
         </div>
+    </div>
 
+    </div>
+
+    <!-- STANDALONE MISSING DATA REPORT MODAL (outside container) -->
+    <div id="missing-data-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; padding: 2rem 1rem;">
+        <div style="background: white; max-width: 900px; margin: 2rem auto; border-radius: 0.5rem; padding: 2rem; box-shadow: 0 20px 25px rgba(0,0,0,0.15);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="margin: 0; color: #0f172a; font-size: 1.75rem;">Missing Data Report - Follow-Up Checklist</h2>
+                <button onclick="document.getElementById('missing-data-modal').style.display='none'" style="background: #ef4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; font-weight: 600;">✕ Close</button>
+            </div>
+
+            <p style="margin-bottom: 1.5rem; color: #64748b;">Track which mothers and children still need to enter data</p>
+
+            <div style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem; color: #1e293b;">👶 Children with Zero Attendance</h3>
+                <p style="color: #64748b; margin-bottom: 1rem;">These children have no attendance recorded across any activities</p>
+                <div id="modal-missing-children-list" style="background: #fee2e2; padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #ef4444; min-height: 50px; color: #1e293b;">
+                    <p>Loading...</p>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem; color: #1e293b;">📋 Mothers with Children Missing Attendance Data</h3>
+                <p style="color: #64748b; margin-bottom: 1rem;">These mothers have at least one child with no attendance entered</p>
+                <div id="modal-mothers-missing-child-attendance-list" style="background: #dbeafe; padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #3b82f6; min-height: 50px; color: #1e293b;">
+                    <p>Loading...</p>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 2rem;">
+                <button onclick="generateMissingDataReport()" style="padding: 1rem; background: #5BA3D0; color: white; border: none; border-radius: 0.375rem; font-weight: 600; cursor: pointer;">🔄 Refresh Report</button>
+                <button onclick="exportMissingDataReportCSV()" style="padding: 1rem; background: #10b981; color: white; border: none; border-radius: 0.375rem; font-weight: 600; cursor: pointer;">📥 Export CSV</button>
+                <button onclick="printMissingDataReport()" style="padding: 1rem; background: #8b5cf6; color: white; border: none; border-radius: 0.375rem; font-weight: 600; cursor: pointer;">🖨️ Print</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="attendance-details-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; padding: 2rem 1rem;">
+        <div style="background: white; max-width: 1000px; margin: 2rem auto; border-radius: 0.5rem; padding: 2rem; box-shadow: 0 20px 25px rgba(0,0,0,0.15);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="margin: 0; color: #0f172a; font-size: 1.75rem;">📋 Attendance Details by Child Name</h2>
+                <button onclick="document.getElementById('attendance-details-modal').style.display='none'" style="background: #ef4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; font-weight: 600;">✕ Close</button>
+            </div>
+
+            <p style="margin-bottom: 1.5rem; color: #64748b;">Complete list of children who attended each activity, organized by age group.</p>
+
+            <div id="modal-attendance-details-container" style="background: #f8fafc; padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #5BA3D0; margin-bottom: 2rem;">
+                <p style="color: #64748b; text-align: center; margin: 2rem 0;">Loading attendance data...</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 2rem;">
+                <button onclick="generateAttendanceDetailsReport()" style="padding: 1rem; background: #5BA3D0; color: white; border: none; border-radius: 0.375rem; font-weight: 600; cursor: pointer;">🔄 Refresh</button>
+                <button onclick="downloadAttendanceDetailsCSV()" style="padding: 1rem; background: #10b981; color: white; border: none; border-radius: 0.375rem; font-weight: 600; cursor: pointer;">📥 Download CSV</button>
+                <button onclick="printAttendanceDetails()" style="padding: 1rem; background: #8b5cf6; color: white; border: none; border-radius: 0.375rem; font-weight: 600; cursor: pointer;">🖨️ Print</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1264,7 +1326,42 @@
 
         const ratings = { membership: {}, programming: {}, operations: {}, financial: {}, service: {} };
         const childAttendanceData = {}; // Stores child attendance: { "ChildName|AgeGroup": ["Activity1", "Activity2", ...] }
+
+        // Pre-populate with test data for demo purposes
+        childAttendanceData['Audrey Allen|WW'] = ['Packing Party & Shoes', 'STEaM Into Future', 'Mental Resiliency'];
+        childAttendanceData['Kingston James|WW'] = ['Packing Party & Shoes', 'Carole Robertson Day', 'Harvest at Oakes', 'Mental Resiliency'];
+        childAttendanceData['Chandler Kirk|WW'] = ['STEaM Into Future', 'Mothers Area Workday'];
+        childAttendanceData['Ezrah Murphy|WW'] = ['Packing Party & Shoes', 'STEaM Into Future', 'Harvest at Oakes', 'Faith in Blue'];
+        childAttendanceData['Jaxson Phelps|WW'] = ['Carole Robertson Day', 'Mental Resiliency', 'Mothers Area Workday'];
+        childAttendanceData['Jayson Phelps|WW'] = ['Packing Party & Shoes', 'Harvest at Oakes', 'Faith in Blue', 'Authorship & Veterans'];
+
+        childAttendanceData['Cameron Allen|PI'] = ['Packing Party & Shoes', 'STEaM Into Future', 'Harvest at Oakes', 'Mental Resiliency', 'Faith in Blue'];
+        childAttendanceData['Malcom Anderson|PI'] = ['Carole Robertson Day', 'Mental Resiliency', 'Mothers Area Workday'];
+        childAttendanceData['Jada Jackson|PI'] = ['Packing Party & Shoes', 'STEaM Into Future', 'Adopt a Road'];
+        childAttendanceData['Krystal Jackson|PI'] = ['Packing Party & Shoes', 'Carole Robertson Day', 'Harvest at Oakes', 'Faith in Blue', 'Authorship & Veterans', 'Kwanzaa Celebration'];
+
+        childAttendanceData['Maxwell Dorsey|TNT'] = ['Packing Party & Shoes', 'Carole Robertson Day', 'STEaM Into Future', 'Mental Resiliency', 'Adopt a Road'];
+        childAttendanceData['Emery Roberson|TNT'] = ['Harvest at Oakes', 'Faith in Blue', 'Authorship & Veterans', 'Kwanzaa Celebration', 'Oratorical & MLK'];
+        childAttendanceData['Kendall Jordan|TNT'] = ['Packing Party & Shoes', 'STEaM Into Future', 'Mental Resiliency', 'Adopt a Road', 'Kwanzaa Celebration'];
+        childAttendanceData['Maya Jordan|TNT'] = ['Carole Robertson Day', 'Harvest at Oakes', 'Mental Resiliency', 'Founders Day'];
+        childAttendanceData['Blake Kitchen|TNT'] = ['Packing Party & Shoes', 'Mental Resiliency', 'Faith in Blue', 'Membership Tea'];
+
+        childAttendanceData['Malia Barnes|RT'] = ['Packing Party & Shoes', 'Carole Robertson Day', 'STEaM Into Future', 'Harvest at Oakes', 'Mental Resiliency', 'Mothers Area Workday'];
+        childAttendanceData['Morgan Dorsey|RT'] = ['Packing Party & Shoes', 'Mental Resiliency', 'Faith in Blue', 'Authorship & Veterans'];
+        childAttendanceData['Jordan Farrior|RT'] = ['Carole Robertson Day', 'STEaM Into Future', 'Harvest at Oakes', 'Adopt a Road'];
+        childAttendanceData['Brayden Hazelbaker|RT'] = ['Packing Party & Shoes', 'Mental Resiliency', 'Kwanzaa Celebration', 'Oratorical & MLK', 'Membership Tea'];
+        childAttendanceData['Camden Houston|RT'] = ['STEaM Into Future', 'Harvest at Oakes', 'Faith in Blue', 'Authorship & Veterans', 'Kwanzaa Celebration', 'Oratorical & MLK'];
+
         let testMode = false;
+
+        // Global variables for missing data report (used by export/print functions)
+        let childrenWithNoAttendance = [];
+        let mothersWithChildrenMissingAttendance = [];
+        let childrenTotal = 0;
+        let childrenPct = 0;
+        let mothersPct = 0;
+        let ageGroupPcts = { WW: {}, PI: {}, TNT: {}, RT: {} };
+        let ageGroupTotals = { WW: 0, PI: 0, TNT: 0, RT: 0 };
 
         // Fallback mother contact database (used in Test Mode)
         const fallbackMotherContacts = [
@@ -1522,10 +1619,46 @@
         }
 
         function switchTab(event, tabName) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            console.log('switchTab called with tabName:', tabName);
+
+            // Special handling for missing-data - use modal instead
+            if (tabName === 'missing-data') {
+                console.log('Opening missing data modal');
+                document.getElementById('missing-data-modal').style.display = 'block';
+                generateMissingDataReport();
+                return;
+            }
+
+            // Special handling for attendance-details - use modal instead
+            if (tabName === 'attendance-details') {
+                console.log('Opening attendance details modal');
+                document.getElementById('attendance-details-modal').style.display = 'block';
+                generateAttendanceDetailsReport();
+                return;
+            }
+
+            // Remove active class from all tabs - CSS handles the display
+            document.querySelectorAll('.tab-content').forEach(t => {
+                t.classList.remove('active');
+            });
+
+            // Remove active button highlighting
             document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
+
+            // Add active class to selected tab
+            const tabElement = document.getElementById(tabName);
+            if (tabElement) {
+                console.log('Found tab element:', tabName);
+                tabElement.classList.add('active');
+                console.log('Tab should now be visible via CSS');
+            } else {
+                console.log('ERROR: Could not find tab element with id:', tabName);
+            }
+
+            // Highlight the active button
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
         }
 
         function setRating(e, category, num) {
@@ -1553,6 +1686,127 @@
                 statusEl.className = 'status ' + statusClass[rating];
             }
             updateDashboard();
+        }
+
+        // Generate Attendance Details Report with child names by age group
+        function generateAttendanceDetailsReport() {
+            const container = document.getElementById('modal-attendance-details-container');
+            if (!container) return;
+
+            let html = '';
+
+            // Build a set of unique children from childAttendanceData
+            const childrenMap = new Map(); // Maps child name to age group
+
+            Object.keys(childAttendanceData).forEach(childKey => {
+                // childKey is in format "ChildName|AgeGroup"
+                const parts = childKey.split('|');
+                if (parts.length === 2) {
+                    childrenMap.set(parts[0], parts[1]);
+                }
+            });
+
+            if (childrenMap.size === 0) {
+                html = `<p style="color: #64748b; text-align: center; padding: 2rem;">No attendance data recorded yet. Once mothers enter attendance information, child names will appear here organized by age group for each activity.</p>`;
+                container.innerHTML = html;
+                return;
+            }
+
+            activities.forEach(activity => {
+                html += `<div style="margin-bottom: 2.5rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 1.5rem; background: white;">`;
+                html += `<h3 style="margin: 0 0 1.5rem 0; color: #0f172a; font-size: 1.2rem; border-bottom: 2px solid #5BA3D0; padding-bottom: 0.75rem;">${activity}</h3>`;
+
+                const ageGroups = [
+                    { code: 'WW', name: 'WW (Ages 2-5)' },
+                    { code: 'PI', name: 'PI (Ages 6-9)' },
+                    { code: 'TNT', name: 'TNT (Ages 10-12)' },
+                    { code: 'RT', name: 'RT (Teens 13+)' }
+                ];
+
+                ageGroups.forEach(ageGroup => {
+                    // Get children for this age group who attended this activity
+                    const childrenAttended = [];
+
+                    childrenMap.forEach((ageGroupCode, childName) => {
+                        if (ageGroupCode === ageGroup.code) {
+                            const childKey = childName + '|' + ageGroup.code;
+                            const activities = childAttendanceData[childKey] || [];
+                            if (activities.includes(activity)) {
+                                childrenAttended.push(childName);
+                            }
+                        }
+                    });
+
+                    if (childrenAttended.length > 0) {
+                        html += `<div style="margin-bottom: 1rem;">`;
+                        html += `<p style="margin: 0.5rem 0; font-weight: 600; color: #334155; font-size: 0.95rem;">${ageGroup.name}: ${childrenAttended.length} children</p>`;
+                        html += `<ul style="margin: 0.5rem 0 0 1.5rem; padding: 0; color: #475569;">`;
+                        childrenAttended.sort().forEach(child => {
+                            html += `<li style="margin-bottom: 0.25rem;">${child}</li>`;
+                        });
+                        html += `</ul>`;
+                        html += `</div>`;
+                    }
+                });
+
+                html += `</div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function printAttendanceDetails() {
+            generateAttendanceDetailsReport();
+            setTimeout(() => window.print(), 100);
+        }
+
+        function downloadAttendanceDetailsCSV() {
+            let csv = 'Activity,Age Group,Child Name\n';
+
+            // Build a set of unique children from childAttendanceData
+            const childrenMap = new Map(); // Maps child name to age group
+
+            Object.keys(childAttendanceData).forEach(childKey => {
+                const parts = childKey.split('|');
+                if (parts.length === 2) {
+                    childrenMap.set(parts[0], parts[1]);
+                }
+            });
+
+            const ageGroups = ['WW', 'PI', 'TNT', 'RT'];
+
+            activities.forEach(activity => {
+                const childrenForActivity = [];
+
+                childrenMap.forEach((ageGroupCode, childName) => {
+                    const childKey = childName + '|' + ageGroupCode;
+                    const childActivities = childAttendanceData[childKey] || [];
+                    if (childActivities.includes(activity)) {
+                        childrenForActivity.push({ childName, ageGroupCode });
+                    }
+                });
+
+                // Sort by age group, then by child name
+                childrenForActivity.sort((a, b) => {
+                    if (a.ageGroupCode !== b.ageGroupCode) {
+                        return ageGroups.indexOf(a.ageGroupCode) - ageGroups.indexOf(b.ageGroupCode);
+                    }
+                    return a.childName.localeCompare(b.childName);
+                });
+
+                childrenForActivity.forEach(({ childName, ageGroupCode }) => {
+                    csv += `"${activity}","${ageGroupCode}","${childName}"\n`;
+                });
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'Attendance_Details_' + new Date().toISOString().split('T')[0] + '.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function updateDashboard() {
@@ -1589,6 +1843,17 @@
             console.log('Generating missing data report...');
             console.log('Current childAttendanceData:', childAttendanceData);
 
+            // DEBUG: Verify tab element exists and is visible
+            const missingDataTab = document.getElementById('missing-data');
+            if (missingDataTab) {
+                const rect = missingDataTab.getBoundingClientRect();
+                console.log('DEBUG: missing-data tab dimensions:', {width: rect.width, height: rect.height, top: rect.top, left: rect.left});
+                console.log('DEBUG: missing-data tab computed display:', window.getComputedStyle(missingDataTab).display);
+                console.log('DEBUG: missing-data tab computed visibility:', window.getComputedStyle(missingDataTab).visibility);
+                console.log('DEBUG: missing-data tab offsetHeight:', missingDataTab.offsetHeight);
+                console.log('DEBUG: missing-data tab offsetWidth:', missingDataTab.offsetWidth);
+            }
+
             // Find mothers with NO participation data
             const mothersWithNoData = [];
             allMothers.forEach(m => {
@@ -1606,10 +1871,10 @@
 
             // Calculate mother percentage
             const mothersTotal = 39;
-            const mothersPct = Math.round((mothersWithNoData.length / mothersTotal) * 100);
+            mothersPct = Math.round((mothersWithNoData.length / mothersTotal) * 100);
 
             // Find children with NO attendance - by age group
-            const childrenWithNoAttendance = [];
+            childrenWithNoAttendance = [];
             const childrenByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
             const childrenNoAttendanceByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
             const childSelect = document.getElementById('child-select');
@@ -1632,10 +1897,10 @@
             }
 
             // Calculate child percentages
-            const childrenTotal = 68;
-            const childrenPct = Math.round((childrenWithNoAttendance.length / childrenTotal) * 100);
-            const ageGroupTotals = { WW: 13, PI: 6, TNT: 14, RT: 35 };
-            const ageGroupPcts = {};
+            childrenTotal = 68;
+            childrenPct = Math.round((childrenWithNoAttendance.length / childrenTotal) * 100);
+            ageGroupTotals = { WW: 13, PI: 6, TNT: 14, RT: 35 };
+            ageGroupPcts = {};
             for (let ag in ageGroupTotals) {
                 const noDataCount = childrenNoAttendanceByAgeGroup[ag] ? childrenNoAttendanceByAgeGroup[ag].length : 0;
                 ageGroupPcts[ag] = { count: noDataCount, pct: Math.round((noDataCount / ageGroupTotals[ag]) * 100) };
@@ -1643,7 +1908,7 @@
 
             // Find mothers with children missing attendance data
             // Map children to mothers by matching last names
-            const mothersWithChildrenMissingAttendance = [];
+            mothersWithChildrenMissingAttendance = [];
             const mappedChildrenToMothers = {};
 
             allMothers.forEach(mother => {
@@ -1669,55 +1934,48 @@
             console.log('Children with no attendance:', childrenWithNoAttendance.length);
             console.log('Mothers with children missing attendance:', mothersWithChildrenMissingAttendance.length);
 
-            // Display missing mothers
-            const missingMothersDiv = document.getElementById('missing-mothers-list');
-            if (missingMothersDiv) {
-                if (mothersWithNoData.length === 0) {
-                    missingMothersDiv.innerHTML = '<p style="color: #15803d; font-weight: 600;">✅ Great! All mothers have entered at least one participation!</p>';
-                } else {
-                    let html = '<div style="background: #fef3c7; padding: 1rem; border-radius: 0.375rem; margin-bottom: 1.5rem;"><p style="margin: 0; font-weight: 700; color: #78350f; font-size: 1.1rem;">' + mothersWithNoData.length + ' of ' + mothersTotal + ' mothers (' + mothersPct + '%)</p><p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; color: #92400e;">Missing participation data</p></div>';
-                    html += '<p style="margin-bottom: 1rem; font-weight: 600;">Mothers to follow up with:</p><ul style="margin-left: 1rem;">';
-                    mothersWithNoData.forEach(m => {
-                        html += '<li style="margin-bottom: 0.5rem; padding: 0.5rem; background: white; border-radius: 0.375rem;">📌 ' + m + '</li>';
-                    });
-                    html += '</ul>';
-                    missingMothersDiv.innerHTML = html;
-                }
-            }
+            // Section 1 DEACTIVATED - Mothers with no participation data
+            // This section is intentionally disabled
 
-            // Display children with no attendance
-            const missingChildrenDiv = document.getElementById('missing-children-list');
+            // Display children with no attendance (MODAL VERSION)
+            const missingChildrenDiv = document.getElementById('modal-missing-children-list');
+            console.log('DEBUG: missingChildrenDiv found?', !!missingChildrenDiv);
             if (missingChildrenDiv) {
-                if (childrenWithNoAttendance.length === 0) {
-                    missingChildrenDiv.innerHTML = '<p style="color: #15803d; font-weight: 600;">✅ All children have attendance records!</p>';
-                } else {
-                    let html = '<div style="background: #fee2e2; padding: 1rem; border-radius: 0.375rem; margin-bottom: 1.5rem;"><p style="margin: 0; font-weight: 700; color: #7f1d1d; font-size: 1.1rem;">' + childrenWithNoAttendance.length + ' of ' + childrenTotal + ' children (' + childrenPct + '%)</p><p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: #991b1b;"><strong>By Age Group:</strong><br>WW: ' + ageGroupPcts.WW.count + '/' + ageGroupTotals.WW + ' (' + ageGroupPcts.WW.pct + '%) | PI: ' + ageGroupPcts.PI.count + '/' + ageGroupTotals.PI + ' (' + ageGroupPcts.PI.pct + '%) | TNT: ' + ageGroupPcts.TNT.count + '/' + ageGroupTotals.TNT + ' (' + ageGroupPcts.TNT.pct + '%) | RT: ' + ageGroupPcts.RT.count + '/' + ageGroupTotals.RT + ' (' + ageGroupPcts.RT.pct + '%)</p></div>';
-                    html += '<p style="margin-bottom: 1rem; font-weight: 600;">Children needing attendance records:</p><ul style="margin-left: 1rem;">';
+                let html = '<strong style="color: #1e293b; display: block; margin-bottom: 1rem;">' + childrenWithNoAttendance.length + ' of ' + childrenTotal + ' children (' + childrenPct + '%) need attendance:</strong>';
+                if (childrenWithNoAttendance.length > 0) {
+                    html += '<div style="color: #1e293b;"><strong>By Age Group:</strong><br>WW: ' + ageGroupPcts.WW.count + '/' + ageGroupTotals.WW + ' | PI: ' + ageGroupPcts.PI.count + '/' + ageGroupTotals.PI + ' | TNT: ' + ageGroupPcts.TNT.count + '/' + ageGroupTotals.TNT + ' | RT: ' + ageGroupPcts.RT.count + '/' + ageGroupTotals.RT + '</div><br>';
                     childrenWithNoAttendance.forEach(({ childName, ageGroup }) => {
-                        html += '<li style="margin-bottom: 0.5rem; padding: 0.5rem; background: white; border-radius: 0.375rem;">👶 ' + childName + ' <span style="color: #64748b; font-size: 0.85rem;">(' + ageGroup + ')</span></li>';
+                        html += '<div style="color: #1e293b;">👶 ' + childName + ' (' + ageGroup + ')</div>';
                     });
-                    html += '</ul><p style="margin-top: 1rem; font-size: 0.9rem; color: #64748b;">Go to <strong>Child Attendance tab</strong> to record their activities.</p>';
-                    missingChildrenDiv.innerHTML = html;
                 }
+                console.log('DEBUG: Setting innerHTML on missingChildrenDiv, length:', html.length);
+                missingChildrenDiv.innerHTML = html;
+                console.log('DEBUG: innerHTML set, current content:', missingChildrenDiv.innerHTML.substring(0, 100));
             }
 
-            // Display mothers with children missing attendance
-            const mothersChildAttendanceDiv = document.getElementById('mothers-missing-child-attendance-list');
+            // Display mothers with children missing attendance (MODAL VERSION)
+            const mothersChildAttendanceDiv = document.getElementById('modal-mothers-missing-child-attendance-list');
+            console.log('DEBUG: mothersChildAttendanceDiv found?', !!mothersChildAttendanceDiv);
             if (mothersChildAttendanceDiv) {
                 if (mothersWithChildrenMissingAttendance.length === 0) {
-                    mothersChildAttendanceDiv.innerHTML = '<p style="color: #15803d; font-weight: 600;">✅ All mothers\' children have attendance records!</p>';
+                    mothersChildAttendanceDiv.textContent = '✅ All mothers\' children have attendance records!';
                 } else {
-                    let html = '<p style="margin-bottom: 1rem; font-weight: 600;">' + mothersWithChildrenMissingAttendance.length + ' mothers have children without attendance data:</p>';
+                    let html = '<strong style="color: #1e293b; display: block; margin-bottom: 1rem;">' + mothersWithChildrenMissingAttendance.length + ' mothers with children needing attendance:</strong>';
                     mothersWithChildrenMissingAttendance.forEach(({ motherName, children }) => {
-                        html += '<div style="margin-bottom: 1rem; padding: 0.75rem; background: white; border-radius: 0.375rem;"><p style="font-weight: 600; margin-bottom: 0.5rem;">👩 ' + motherName + '</p>';
-                        html += '<ul style="margin-left: 1rem;">';
+                        const contact = motherContactsMap[motherName] || {};
+                        html += '<div style="color: #1e293b; margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 0.375rem; border-left: 3px solid #3b82f6;">';
+                        html += '<strong style="font-size: 1.1rem;">👩 ' + motherName + '</strong><br>';
+                        if (contact.email) html += '<div style="font-size: 0.9rem; margin-top: 0.5rem;">📧 ' + contact.email + '</div>';
+                        if (contact.phone) html += '<div style="font-size: 0.9rem;">📱 ' + contact.phone + '</div>';
+                        html += '<div style="margin-left: 0; margin-top: 0.75rem;"><strong style="font-size: 0.95rem;">Children missing attendance:</strong>';
                         children.forEach(child => {
-                            html += '<li style="font-size: 0.9rem;">👶 ' + child + '</li>';
+                            html += '<div style="margin-left: 1rem; margin-top: 0.25rem;">👶 ' + child + '</div>';
                         });
-                        html += '</ul></div>';
+                        html += '</div></div>';
                     });
-                    html += '<p style="margin-top: 1rem; font-size: 0.9rem; color: #64748b;">Each mother should submit attendance for all their children in the <strong>Child Attendance tab</strong>.</p>';
+                    console.log('DEBUG: Setting innerHTML on mothersDiv, length:', html.length);
                     mothersChildAttendanceDiv.innerHTML = html;
+                    console.log('DEBUG: innerHTML set on mothers');
                 }
             }
 
@@ -1740,6 +1998,103 @@
             console.log('Mothers missing:', mothersPct + '%');
             console.log('Children missing:', childrenPct + '%');
             console.log('By age group:', ageGroupPcts);
+        }
+
+        function exportMissingDataReportCSV() {
+            // Create CSV with proper Excel formatting
+            let csv = 'Mother Name,Email,Phone,Children Missing Attendance\n';
+
+            mothersWithChildrenMissingAttendance.forEach(({ motherName, children }) => {
+                const contact = motherContactsMap[motherName] || {};
+                const childrenList = children.join('; ');
+                csv += '"' + motherName + '","' + (contact.email || '') + '","' + (contact.phone || '') + '","' + childrenList + '"\n';
+            });
+
+            // Download as CSV (Excel opens this perfectly and can save as .xlsx)
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'Mothers_Follow_Up_' + new Date().toISOString().split('T')[0] + '.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function printMissingDataReport() {
+            const printWindow = window.open('', '', 'height=600,width=800');
+            const htmlContent = `
+                <html>
+                <head>
+                    <title>Missing Data Report</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h1 { color: #0f172a; border-bottom: 3px solid #5BA3D0; padding-bottom: 10px; }
+                        h2 { color: #1e293b; margin-top: 30px; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        th, td { border: 1px solid #cbd5e1; padding: 12px; text-align: left; }
+                        th { background-color: #ecf0ff; color: #1e293b; font-weight: bold; }
+                        tr:nth-child(even) { background-color: #f8fafc; }
+                        .section { margin-bottom: 40px; }
+                        .summary { background: #f1f5f9; padding: 15px; border-left: 4px solid #5BA3D0; margin: 20px 0; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Missing Data Report - Follow-Up Checklist</h1>
+                    <div class="summary">
+                        <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+                        <p><strong>Children Missing Attendance:</strong> ${childrenWithNoAttendance.length} of ${childrenTotal} (${childrenPct}%)</p>
+                        <p><strong>Mothers with Missing Child Data:</strong> ${mothersWithChildrenMissingAttendance.length}</p>
+                    </div>
+
+                    <div class="section">
+                        <h2>Children with Zero Attendance</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Child Name</th>
+                                    <th>Age Group</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${childrenWithNoAttendance.map(({ childName, ageGroup }) =>
+                                    `<tr><td>${childName}</td><td>${ageGroup}</td></tr>`
+                                ).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="section">
+                        <h2>Mothers with Children Missing Attendance Data</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Mother Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Children Missing Attendance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${mothersWithChildrenMissingAttendance.map(({ motherName, children }) => {
+                                    const contact = motherContactsMap[motherName] || {};
+                                    return `<tr>
+                                        <td>${motherName}</td>
+                                        <td>${contact.email || 'N/A'}</td>
+                                        <td>${contact.phone || 'N/A'}</td>
+                                        <td>${children.join(', ')}</td>
+                                    </tr>`;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </body>
+                </html>
+            `;
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+            setTimeout(() => printWindow.print(), 250);
         }
 
         function updateChildAgeGroup() {
@@ -2633,11 +2988,14 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
-            // Restore test mode from localStorage
-            if (localStorage.getItem('testMode') === 'true') {
-                testMode = true;
-                document.getElementById('test-mode-toggle').checked = true;
-            }
+            // DEBUG: Log page structure on load
+            console.log('PAGE LOAD DEBUG:');
+            console.log('Body height:', document.body.offsetHeight);
+            console.log('Body style.height:', document.body.style.height);
+            console.log('Html height:', document.documentElement.offsetHeight);
+            console.log('Container element:', !!document.querySelector('.container'));
+            console.log('Container height:', document.querySelector('.container')?.offsetHeight);
+            console.log('Attendance tab height:', document.getElementById('attendance')?.offsetHeight);
 
             // Load mothers from Supabase (or use fallback)
             await loadMothersFromSupabase();
