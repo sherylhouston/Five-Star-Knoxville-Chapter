@@ -1327,6 +1327,20 @@
         const ratings = { membership: {}, programming: {}, operations: {}, financial: {}, service: {} };
         const childAttendanceData = {}; // Stores child attendance: { "ChildName|AgeGroup": ["Activity1", "Activity2", ...] }
 
+        // Fallback children data from Supabase (in case database connection fails)
+        const fallbackChildrenByMother = {
+            'Erika Allen': [{ child_name: 'Audrey Allen', age_group: 'WW' }, { child_name: 'Cameron Allen', age_group: 'PI' }],
+            'Leasa Woods Anderson': [{ child_name: 'Corrine Anderson', age_group: 'TNT' }, { child_name: 'Malcom Anderson', age_group: 'PI' }],
+            'Vidya Barnes': [{ child_name: 'Malia Barnes', age_group: 'RT' }],
+            'Myisha Dorsey': [{ child_name: 'Morgan Dorsey', age_group: 'RT' }, { child_name: 'Maxwell Dorsey', age_group: 'TNT' }],
+            'Nayasha Farrior': [{ child_name: 'Jordan Farrior', age_group: 'RT' }],
+            'Janera Felton': [{ child_name: 'Leona Felton', age_group: 'WW' }],
+            'Chantrelle Harris': [{ child_name: 'Parker Middleton', age_group: 'PI' }],
+            'ReShanta Hazelbaker': [{ child_name: 'Chloe Hazelbaker', age_group: 'RT' }, { child_name: 'Brayden Hazelbaker', age_group: 'RT' }],
+            'Sheryl Houston': [{ child_name: 'Camden Houston', age_group: 'RT' }, { child_name: 'Shelby Houston', age_group: 'RT' }],
+            'Adia Jackson': [{ child_name: 'Denver Jackson', age_group: 'RT' }]
+        };
+
         // Pre-populate with test data for demo purposes
         childAttendanceData['Audrey Allen|WW'] = ['Packing Party & Shoes', 'STEaM Into Future', 'Mental Resiliency'];
         childAttendanceData['Kingston James|WW'] = ['Packing Party & Shoes', 'Carole Robertson Day', 'Harvest at Oakes', 'Mental Resiliency'];
@@ -2173,22 +2187,34 @@
             const childSelect = document.getElementById('child-select');
             if (!childSelect || !selectedMotherName) return;
 
+            let childrenData = null;
+
             try {
-                // Fetch children for selected mother from Supabase
+                // Try to fetch from Supabase first
                 if (supabaseClient) {
-                    const { data: childrenData, error } = await supabaseClient
+                    const { data, error } = await supabaseClient
                         .from('children')
                         .select('child_name, age_group')
                         .eq('mother_name', selectedMotherName)
                         .order('child_name');
 
-                    if (error || !childrenData) {
-                        // Suppress DataCloneError noise
-                        if (error && !error.message.includes('DataCloneError')) {
-                            console.log('Using fallback children list');
-                        }
-                        return;
+                    if (!error && data && data.length > 0) {
+                        childrenData = data;
                     }
+                }
+            } catch (e) {
+                console.log('Supabase query failed, using fallback:', e);
+            }
+
+            // Use fallback if Supabase failed or returned no data
+            if (!childrenData || childrenData.length === 0) {
+                childrenData = fallbackChildrenByMother[selectedMotherName] || [];
+            }
+
+            if (childrenData.length === 0) {
+                console.log('No children found for mother:', selectedMotherName);
+                return;
+            }
 
                     // Clear all options except placeholder
                     childSelect.innerHTML = '<option value="">-- Select your child --</option>';
