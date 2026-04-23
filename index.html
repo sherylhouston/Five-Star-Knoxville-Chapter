@@ -2616,8 +2616,11 @@
                 alert('⚠️ ' + name + ' attendance recorded locally.\n\nTo save to database:\n1. Complete Supabase setup (April 22)\n2. Run the SQL scripts\n3. Refresh this page\n\nOr enable Test Mode at the top to test without Supabase.\n\nReady for another child? Select and submit again.');
             }
 
-            // Refresh the missing data report to show updated attendance
+            // Refresh ALL reports to show updated attendance
+            updateDashboard();
             generateMissingDataReport();
+            generateAttendanceDetailsReport();
+            generateChildActivitySummary();
 
             e.target.reset();
             document.getElementById('age-group-display').style.display = 'none';
