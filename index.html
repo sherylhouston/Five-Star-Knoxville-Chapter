@@ -1318,10 +1318,27 @@
     <script>
         const SUPABASE_URL = 'https://eduqqsoyiipapkgctxme.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_WG_39AMSKru8AEvrJ8YTxg_bV80VJZC';
-        let supabaseClient;
+        let supabaseClient = null;
 
-        if (window.supabase && window.supabase.createClient) {
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Wait for Supabase to load, then initialize
+        function initSupabase() {
+            if (window.supabase && window.supabase.createClient) {
+                try {
+                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                    console.log('✅ Supabase client initialized');
+                } catch (e) {
+                    console.error('❌ Supabase initialization error:', e);
+                }
+            } else {
+                console.log('⚠️ Supabase library not available yet');
+            }
+        }
+
+        // Initialize immediately if available, otherwise wait
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initSupabase);
+        } else {
+            initSupabase();
         }
 
         // Fallback hardcoded data (used in Test Mode)
