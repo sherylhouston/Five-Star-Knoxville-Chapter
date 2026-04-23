@@ -1961,28 +1961,39 @@
             const childrenByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
             const childrenNoAttendanceByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
 
-            // Find children with NO attendance - by age group (ORIGINAL CODE - from child-select dropdown)
+            // Find children with NO attendance - load ALL 71 children from Supabase
             childrenWithNoAttendance = [];
             const childrenByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
             const childrenNoAttendanceByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
-            const childSelect = document.getElementById('child-select');
-            if (childSelect) {
-                const options = childSelect.querySelectorAll('option');
-                options.forEach(opt => {
-                    if (opt.value) {
-                        const [childName, ageGroup] = opt.value.split('|');
-                        if (!childrenByAgeGroup[ageGroup]) childrenByAgeGroup[ageGroup] = [];
-                        childrenByAgeGroup[ageGroup].push(opt.value);
 
-                        // Check if this child has attendance recorded in childAttendanceData
-                        if (!childAttendanceData[opt.value]) {
-                            childrenWithNoAttendance.push({ childName, childValue: opt.value, ageGroup });
-                            if (!childrenNoAttendanceByAgeGroup[ageGroup]) childrenNoAttendanceByAgeGroup[ageGroup] = [];
-                            childrenNoAttendanceByAgeGroup[ageGroup].push(childName);
-                        }
+            let allChildrenList = [];
+            if (supabaseClient) {
+                try {
+                    const { data: allChildren } = await supabaseClient
+                        .from('children')
+                        .select('child_name, age_group')
+                        .order('age_group, child_name');
+
+                    if (allChildren) {
+                        allChildrenList = allChildren.map(c => ({ childName: c.child_name, ageGroup: c.age_group }));
                     }
-                });
+                } catch (e) {
+                    console.log('Error loading children from Supabase:', e);
+                }
             }
+
+            allChildrenList.forEach(({ childName, ageGroup }) => {
+                const childValue = `${childName}|${ageGroup}`;
+                if (!childrenByAgeGroup[ageGroup]) childrenByAgeGroup[ageGroup] = [];
+                childrenByAgeGroup[ageGroup].push(childValue);
+
+                // Check if this child has attendance recorded in childAttendanceData
+                if (!childAttendanceData[childValue]) {
+                    childrenWithNoAttendance.push({ childName, childValue, ageGroup });
+                    if (!childrenNoAttendanceByAgeGroup[ageGroup]) childrenNoAttendanceByAgeGroup[ageGroup] = [];
+                    childrenNoAttendanceByAgeGroup[ageGroup].push(childName);
+                }
+            });
 
             // Calculate child percentages
             childrenTotal = allChildren.length; // Use actual count from Supabase
