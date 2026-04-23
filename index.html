@@ -280,6 +280,18 @@
                     </select>
                 </div>
 
+                <!-- EDIT PREVIOUS ENTRY SECTION -->
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 1.25rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; color: #166534; font-size: 1rem;">✏️ Edit Previous Entry</h3>
+                    <p style="color: #166534; margin: 0.5rem 0; font-size: 0.9rem;">Want to update a child's attendance? Select them here to load their current data.</p>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <select id="edit-child-select" style="flex: 1; padding: 0.75rem; border: 1px solid #86efac; border-radius: 0.375rem; font-size: 0.95rem;">
+                            <option value="">-- Select a child to edit --</option>
+                        </select>
+                        <button type="button" onclick="loadChildForEditing()" style="background: #10b981; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 0.375rem; cursor: pointer; font-weight: 600; white-space: nowrap;">Load Data</button>
+                    </div>
+                </div>
+
                 <form onsubmit="handleAttendanceSubmit(event)">
                     <div class="form-group">
                         <label>Select Your Child *</label>
@@ -1978,47 +1990,47 @@
             // Section 1 DEACTIVATED - Mothers with no participation data
             // This section is intentionally disabled
 
-            // Display children with no attendance (MODAL VERSION)
-            const missingChildrenDiv = document.getElementById('modal-missing-children-list');
-            console.log('DEBUG: missingChildrenDiv found?', !!missingChildrenDiv);
-            if (missingChildrenDiv) {
-                let html = '<strong style="color: #1e293b; display: block; margin-bottom: 1rem;">' + childrenWithNoAttendance.length + ' of ' + childrenTotal + ' children (' + childrenPct + '%) need attendance:</strong>';
-                if (childrenWithNoAttendance.length > 0) {
-                    html += '<div style="color: #1e293b;"><strong>By Age Group:</strong><br>WW: ' + ageGroupPcts.WW.count + '/' + ageGroupTotals.WW + ' | PI: ' + ageGroupPcts.PI.count + '/' + ageGroupTotals.PI + ' | TNT: ' + ageGroupPcts.TNT.count + '/' + ageGroupTotals.TNT + ' | RT: ' + ageGroupPcts.RT.count + '/' + ageGroupTotals.RT + '</div><br>';
-                    childrenWithNoAttendance.forEach(({ childName, ageGroup }) => {
-                        html += '<div style="color: #1e293b;">👶 ' + childName + ' (' + ageGroup + ')</div>';
-                    });
-                }
-                console.log('DEBUG: Setting innerHTML on missingChildrenDiv, length:', html.length);
-                missingChildrenDiv.innerHTML = html;
-                console.log('DEBUG: innerHTML set, current content:', missingChildrenDiv.innerHTML.substring(0, 100));
+            // Build report HTML
+            let childrenHtml = '<strong style="color: #1e293b; display: block; margin-bottom: 1rem;">' + childrenWithNoAttendance.length + ' of ' + childrenTotal + ' children (' + childrenPct + '%) need attendance:</strong>';
+            if (childrenWithNoAttendance.length > 0) {
+                childrenHtml += '<div style="color: #1e293b;"><strong>By Age Group:</strong><br>WW: ' + ageGroupPcts.WW.count + '/' + ageGroupTotals.WW + ' | PI: ' + ageGroupPcts.PI.count + '/' + ageGroupTotals.PI + ' | TNT: ' + ageGroupPcts.TNT.count + '/' + ageGroupTotals.TNT + ' | RT: ' + ageGroupPcts.RT.count + '/' + ageGroupTotals.RT + '</div><br>';
+                childrenWithNoAttendance.forEach(({ childName, ageGroup }) => {
+                    childrenHtml += '<div style="color: #1e293b;">👶 ' + childName + ' (' + ageGroup + ')</div>';
+                });
             }
 
-            // Display mothers with children missing attendance (MODAL VERSION)
-            const mothersChildAttendanceDiv = document.getElementById('modal-mothers-missing-child-attendance-list');
-            console.log('DEBUG: mothersChildAttendanceDiv found?', !!mothersChildAttendanceDiv);
-            if (mothersChildAttendanceDiv) {
-                if (mothersWithChildrenMissingAttendance.length === 0) {
-                    mothersChildAttendanceDiv.textContent = '✅ All mothers\' children have attendance records!';
-                } else {
-                    let html = '<strong style="color: #1e293b; display: block; margin-bottom: 1rem;">' + mothersWithChildrenMissingAttendance.length + ' mothers with children needing attendance:</strong>';
-                    mothersWithChildrenMissingAttendance.forEach(({ motherName, children }) => {
-                        const contact = motherContactsMap[motherName] || {};
-                        html += '<div style="color: #1e293b; margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 0.375rem; border-left: 3px solid #3b82f6;">';
-                        html += '<strong style="font-size: 1.1rem;">👩 ' + motherName + '</strong><br>';
-                        if (contact.email) html += '<div style="font-size: 0.9rem; margin-top: 0.5rem;">📧 ' + contact.email + '</div>';
-                        if (contact.phone) html += '<div style="font-size: 0.9rem;">📱 ' + contact.phone + '</div>';
-                        html += '<div style="margin-left: 0; margin-top: 0.75rem;"><strong style="font-size: 0.95rem;">Children missing attendance:</strong>';
-                        children.forEach(child => {
-                            html += '<div style="margin-left: 1rem; margin-top: 0.25rem;">👶 ' + child + '</div>';
-                        });
-                        html += '</div></div>';
+            let mothersHtml = '';
+            if (mothersWithChildrenMissingAttendance.length === 0) {
+                mothersHtml = '✅ All mothers\' children have attendance records!';
+            } else {
+                mothersHtml = '<strong style="color: #1e293b; display: block; margin-bottom: 1rem;">' + mothersWithChildrenMissingAttendance.length + ' mothers with children needing attendance:</strong>';
+                mothersWithChildrenMissingAttendance.forEach(({ motherName, children }) => {
+                    const contact = motherContactsMap[motherName] || {};
+                    mothersHtml += '<div style="color: #1e293b; margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 0.375rem; border-left: 3px solid #3b82f6;">';
+                    mothersHtml += '<strong style="font-size: 1.1rem;">👩 ' + motherName + '</strong><br>';
+                    if (contact.email) mothersHtml += '<div style="font-size: 0.9rem; margin-top: 0.5rem;">📧 ' + contact.email + '</div>';
+                    if (contact.phone) mothersHtml += '<div style="font-size: 0.9rem;">📱 ' + contact.phone + '</div>';
+                    mothersHtml += '<div style="margin-left: 0; margin-top: 0.75rem;"><strong style="font-size: 0.95rem;">Children missing attendance:</strong>';
+                    children.forEach(child => {
+                        mothersHtml += '<div style="margin-left: 1rem; margin-top: 0.25rem;">👶 ' + child + '</div>';
                     });
-                    console.log('DEBUG: Setting innerHTML on mothersDiv, length:', html.length);
-                    mothersChildAttendanceDiv.innerHTML = html;
-                    console.log('DEBUG: innerHTML set on mothers');
-                }
+                    mothersHtml += '</div></div>';
+                });
             }
+
+            // Display in regular tab (not modal)
+            const missingChildrenDiv = document.getElementById('missing-children-list');
+            const mothersChildAttendanceDiv = document.getElementById('mothers-missing-child-attendance-list');
+
+            if (missingChildrenDiv) missingChildrenDiv.innerHTML = childrenHtml;
+            if (mothersChildAttendanceDiv) mothersChildAttendanceDiv.innerHTML = mothersHtml;
+
+            // Also display in modal version
+            const missingChildrenModalDiv = document.getElementById('modal-missing-children-list');
+            const mothersChildAttendanceModalDiv = document.getElementById('modal-mothers-missing-child-attendance-list');
+
+            if (missingChildrenModalDiv) missingChildrenModalDiv.innerHTML = childrenHtml;
+            if (mothersChildAttendanceModalDiv) mothersChildAttendanceModalDiv.innerHTML = mothersHtml;
 
             // Update Dashboard with missing data percentages
             const dashMothersMissing = document.getElementById('dash-mothers-missing');
@@ -2202,6 +2214,72 @@
         function onAttendanceMotherSelected() {
             selectedMotherName = document.getElementById('attendance-mother-selector').value;
             updateChildrenForSelectedMother();
+            populateEditChildSelect();
+        }
+
+        // Populate the "Edit Previous Entry" dropdown with children that have been entered
+        function populateEditChildSelect() {
+            const editSelect = document.getElementById('edit-child-select');
+            if (!editSelect) return;
+
+            editSelect.innerHTML = '<option value="">-- Select a child to edit --</option>';
+
+            // Get unique children from childAttendanceData
+            const childrenWithData = [];
+            Object.keys(childAttendanceData).forEach(childKey => {
+                childrenWithData.push(childKey);
+            });
+
+            if (childrenWithData.length === 0) {
+                editSelect.innerHTML = '<option value="">No children entered yet</option>';
+                return;
+            }
+
+            // Sort and add to dropdown
+            childrenWithData.sort().forEach(childKey => {
+                const parts = childKey.split('|');
+                const childName = parts[0];
+                const ageGroup = parts[1];
+                const option = document.createElement('option');
+                option.value = childKey;
+                option.textContent = `${childName} (${ageGroup})`;
+                editSelect.appendChild(option);
+            });
+        }
+
+        // Load child's existing attendance data into the form
+        function loadChildForEditing() {
+            const editSelect = document.getElementById('edit-child-select');
+            const childSelect = document.getElementById('child-select');
+            const selectedChildKey = editSelect.value;
+
+            if (!selectedChildKey) {
+                alert('Please select a child to edit');
+                return;
+            }
+
+            // Set the child selector to this child
+            childSelect.value = selectedChildKey;
+            updateChildAgeGroup();
+
+            // Get the child's current activities
+            const currentActivities = childAttendanceData[selectedChildKey] || [];
+
+            // Uncheck all checkboxes first
+            document.querySelectorAll('input[name="activities"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+
+            // Check the boxes for activities the child attended
+            document.querySelectorAll('input[name="activities"]').forEach(checkbox => {
+                if (currentActivities.includes(checkbox.value)) {
+                    checkbox.checked = true;
+                }
+            });
+
+            // Scroll to the form
+            document.getElementById('child-select').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            alert(`✏️ Loaded data for ${selectedChildKey.split('|')[0]}. Update their activities and click Submit to save changes.`);
         }
 
         // Load evidence whenever mother is selected on any Five Star page
