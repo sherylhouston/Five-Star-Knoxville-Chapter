@@ -1385,24 +1385,21 @@
                 return;
             }
             try {
-                const { data, error } = await supabaseClient.from('submissions').select('*');
+                const { data, error } = await supabaseClient.from('submissions').select('*').order('submitted_at', { ascending: false });
                 if (error) throw error;
                 if (data && data.length > 0) {
                     console.log('📥 Loading attendance from Supabase:', data.length, 'entries');
-                    // Group activities by child
+                    // Group activities by child - ONLY KEEP MOST RECENT ENTRY PER CHILD
                     childAttendanceData = {};
+                    const processedChildren = new Set();
                     data.forEach(entry => {
                         const childKey = entry.child_name + '|' + entry.age_group;
-                        if (!childAttendanceData[childKey]) {
-                            childAttendanceData[childKey] = [];
-                        }
-                        // Add activities if they're in the entry
-                        if (entry.activities && Array.isArray(entry.activities)) {
-                            entry.activities.forEach(act => {
-                                if (!childAttendanceData[childKey].includes(act)) {
-                                    childAttendanceData[childKey].push(act);
-                                }
-                            });
+                        // Only process each child once (first/most recent entry due to ordering)
+                        if (!processedChildren.has(childKey)) {
+                            if (entry.activities && Array.isArray(entry.activities)) {
+                                childAttendanceData[childKey] = entry.activities;
+                            }
+                            processedChildren.add(childKey);
                         }
                     });
                     console.log('✅ Loaded', Object.keys(childAttendanceData).length, 'children from Supabase');
