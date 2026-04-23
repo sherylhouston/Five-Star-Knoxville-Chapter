@@ -1922,7 +1922,7 @@
             refreshReminderData();
         }
 
-        function generateMissingDataReport() {
+        async function generateMissingDataReport() {
             console.log('Generating missing data report...');
             console.log('Current childAttendanceData:', childAttendanceData);
 
@@ -1961,17 +1961,41 @@
             const childrenByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
             const childrenNoAttendanceByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
 
-            // Get ALL children from the fallback data (which includes all 68 children)
-            const allChildren = [];
-            Object.keys(fallbackChildrenByMother).forEach(mother => {
-                fallbackChildrenByMother[mother].forEach(child => {
-                    allChildren.push({
-                        childName: child.child_name,
-                        ageGroup: child.age_group,
-                        childValue: `${child.child_name}|${child.age_group}`
+            // Load ALL children from Supabase (or fallback)
+            let allChildren = [];
+            try {
+                if (supabaseClient) {
+                    const { data: supabaseChildren, error } = await supabaseClient
+                        .from('children')
+                        .select('child_name, age_group')
+                        .order('age_group, child_name');
+
+                    if (!error && supabaseChildren && supabaseChildren.length > 0) {
+                        allChildren = supabaseChildren.map(child => ({
+                            childName: child.child_name,
+                            ageGroup: child.age_group,
+                            childValue: `${child.child_name}|${child.age_group}`
+                        }));
+                        console.log('Loaded', allChildren.length, 'children from Supabase');
+                    }
+                }
+            } catch (e) {
+                console.log('Supabase children load failed:', e);
+            }
+
+            // Fallback to local data if Supabase failed
+            if (allChildren.length === 0) {
+                Object.keys(fallbackChildrenByMother).forEach(mother => {
+                    fallbackChildrenByMother[mother].forEach(child => {
+                        allChildren.push({
+                            childName: child.child_name,
+                            ageGroup: child.age_group,
+                            childValue: `${child.child_name}|${child.age_group}`
+                        });
                     });
                 });
-            });
+                console.log('Using fallback data:', allChildren.length, 'children');
+            }
 
             // Check which children have no attendance data
             allChildren.forEach(child => {
@@ -2629,7 +2653,7 @@
             // Refresh ALL reports to show updated attendance
             updateDashboard();
             initActivities();
-            generateMissingDataReport();
+            await generateMissingDataReport();
             generateAttendanceDetailsReport();
 
             e.target.reset();
@@ -3196,7 +3220,7 @@
             loadEvidenceList();
             updateDashboard();
             updateMeetingDashboard();
-            generateMissingDataReport();
+            await generateMissingDataReport();
             refreshReminderData();
             checkDatabaseStatus();
         });
