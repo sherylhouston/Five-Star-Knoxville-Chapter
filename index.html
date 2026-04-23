@@ -1961,29 +1961,60 @@
             const childrenByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
             const childrenNoAttendanceByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
 
-            // Load ALL children from Supabase (or fallback)
+            // Load ALL UNIQUE children from submissions table (most complete source)
             let allChildren = [];
             try {
                 if (supabaseClient) {
-                    const { data: supabaseChildren, error } = await supabaseClient
-                        .from('children')
+                    const { data: submissions, error } = await supabaseClient
+                        .from('submissions')
                         .select('child_name, age_group')
                         .order('age_group, child_name');
 
-                    if (!error && supabaseChildren && supabaseChildren.length > 0) {
-                        allChildren = supabaseChildren.map(child => ({
-                            childName: child.child_name,
-                            ageGroup: child.age_group,
-                            childValue: `${child.child_name}|${child.age_group}`
-                        }));
-                        console.log('Loaded', allChildren.length, 'children from Supabase');
+                    if (!error && submissions && submissions.length > 0) {
+                        // Get unique children
+                        const uniqueChildren = {};
+                        submissions.forEach(entry => {
+                            const key = `${entry.child_name}|${entry.age_group}`;
+                            if (!uniqueChildren[key]) {
+                                uniqueChildren[key] = {
+                                    childName: entry.child_name,
+                                    ageGroup: entry.age_group,
+                                    childValue: key
+                                };
+                            }
+                        });
+                        allChildren = Object.values(uniqueChildren);
+                        console.log('Loaded', allChildren.length, 'unique children from submissions');
                     }
                 }
             } catch (e) {
-                console.log('Supabase children load failed:', e);
+                console.log('Supabase submissions load failed:', e);
             }
 
-            // Fallback to local data if Supabase failed
+            // If no children in submissions, try children table
+            if (allChildren.length === 0) {
+                try {
+                    if (supabaseClient) {
+                        const { data: supabaseChildren, error } = await supabaseClient
+                            .from('children')
+                            .select('child_name, age_group')
+                            .order('age_group, child_name');
+
+                        if (!error && supabaseChildren && supabaseChildren.length > 0) {
+                            allChildren = supabaseChildren.map(child => ({
+                                childName: child.child_name,
+                                ageGroup: child.age_group,
+                                childValue: `${child.child_name}|${child.age_group}`
+                            }));
+                            console.log('Loaded', allChildren.length, 'children from children table');
+                        }
+                    }
+                } catch (e) {
+                    console.log('Supabase children table load failed:', e);
+                }
+            }
+
+            // Fallback to local data if all else fails
             if (allChildren.length === 0) {
                 Object.keys(fallbackChildrenByMother).forEach(mother => {
                     fallbackChildrenByMother[mother].forEach(child => {
