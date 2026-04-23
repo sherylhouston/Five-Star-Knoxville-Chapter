@@ -1319,13 +1319,52 @@
         let allMothers = [...fallbackMothers];
         let motherContactsMap = {};
 
-        const activities = ['Packing Party & Shoes', 'Carole Robertson Day', 'STEaM Into Future', 'Harvest at Oakes', 'Mental Resiliency', 'Mothers Area Workday', 'Faith in Blue', 'Authorship & Veterans', 'Adopt a Road', 'Kwanzaa Celebration', 'Oratorical & MLK', 'Founders Day', 'Membership Tea', 'Literacy Gala', 'Field Day', 'Hoops Against Hunger', 'Child/Teen Cluster', 'Health CPR', 'STEaM Future April', 'Family Day'];
+        const activities = [
+            'Urban League Shoes For School (WW PI TNT RT - August 2025)',
+            'Carole Robertson/Jack & Jill Day - Sickle Cell Awareness & Blood Drive (WW PI TNT RT - September 2025)',
+            'THE HARVEST - Oakes Farms (WW PI - October 2025)',
+            'Faith in Blue/Mayor Youth Council (TNT RT - October 2025)',
+            'Authorship & Veterans Day - Why my hero had to go (WW PI TNT RT - November 2025)',
+            'Kwanzaa/Winter Celebration (WW PI TNT RT - December 2025)',
+            'Oratorical/MLK/JJOA National Day of Service (WW PI TNT RT - January 2026)',
+            'Founders Day (January 2026)',
+            'Membership Tea/Associate Appreciation (January 2026)',
+            'Childrens Literacy Gala/Black History (WW PI TNT RT - February 2026)',
+            'The Making Money Moves Experience (TNT RT - March 2026)',
+            'Fitness/Health/Field Day & Amyloidosis Awareness (WW PI - March 2026)',
+            'STEaM Into the Future (WW PI - April 2026)',
+            'Health and CPR (TNT RT - April 2026)',
+            'National Black Family Day/Fathers Appreciation (WW PI TNT RT - May 2026)'
+        ];
 
         const statusTexts = ['', 'Minimal Progress', 'In Progress', 'Nearly Complete', 'Complete', 'Exceeded'];
         const statusClass = ['', 'orange', 'orange', 'blue', 'green', 'green'];
 
         const ratings = { membership: {}, programming: {}, operations: {}, financial: {}, service: {} };
-        const childAttendanceData = {}; // Stores child attendance: { "ChildName|AgeGroup": ["Activity1", "Activity2", ...] }
+        let childAttendanceData = {}; // Stores child attendance: { "ChildName|AgeGroup": ["Activity1", "Activity2", ...] }
+
+        // Load attendance data from localStorage on initialization
+        function loadAttendanceFromLocalStorage() {
+            try {
+                const stored = localStorage.getItem('childAttendanceData');
+                if (stored) {
+                    childAttendanceData = JSON.parse(stored);
+                    console.log('✅ Loaded attendance data from storage:', Object.keys(childAttendanceData).length, 'children');
+                }
+            } catch (e) {
+                console.log('Could not load from localStorage:', e);
+            }
+        }
+
+        // Save attendance data to localStorage
+        function saveAttendanceToLocalStorage() {
+            try {
+                localStorage.setItem('childAttendanceData', JSON.stringify(childAttendanceData));
+                console.log('✅ Saved attendance data to storage');
+            } catch (e) {
+                console.log('Could not save to localStorage:', e);
+            }
+        }
 
         // Fallback children data from Supabase (in case database connection fails)
         const fallbackChildrenByMother = {
@@ -1343,6 +1382,10 @@
 
 
         let testMode = false;
+
+        // Sample data for Camden & Shelby Houston (for demonstration)
+        childAttendanceData['Camden Houston|RT'] = ['Urban League Shoes For School (WW PI TNT RT - August 2025)', 'THE HARVEST - Oakes Farms (WW PI - October 2025)', 'Faith in Blue/Mayor Youth Council (TNT RT - October 2025)', 'Kwanzaa/Winter Celebration (WW PI TNT RT - December 2025)', 'Oratorical/MLK/JJOA National Day of Service (WW PI TNT RT - January 2026)'];
+        childAttendanceData['Shelby Houston|RT'] = ['Urban League Shoes For School (WW PI TNT RT - August 2025)', 'Carole Robertson/Jack & Jill Day - Sickle Cell Awareness & Blood Drive (WW PI TNT RT - September 2025)', 'Faith in Blue/Mayor Youth Council (TNT RT - October 2025)', 'Authorship & Veterans Day - Why my hero had to go (WW PI TNT RT - November 2025)', 'Oratorical/MLK/JJOA National Day of Service (WW PI TNT RT - January 2026)', 'Childrens Literacy Gala/Black History (WW PI TNT RT - February 2026)'];
 
         // Global variables for missing data report (used by export/print functions)
         let childrenWithNoAttendance = [];
@@ -2285,9 +2328,26 @@
                 console.log('Initializing activities table with ' + activities.length + ' activities');
                 tbody.innerHTML = '';
                 activities.forEach((act, i) => {
+                    // Calculate attendance counts from childAttendanceData
+                    let wwCount = 0, piCount = 0, tntCount = 0, rtCount = 0;
+
+                    Object.keys(childAttendanceData).forEach(childKey => {
+                        const parts = childKey.split('|');
+                        if (parts.length === 2) {
+                            const ageGroup = parts[1];
+                            const attendedActivities = childAttendanceData[childKey] || [];
+                            if (attendedActivities.includes(act)) {
+                                if (ageGroup === 'WW') wwCount++;
+                                else if (ageGroup === 'PI') piCount++;
+                                else if (ageGroup === 'TNT') tntCount++;
+                                else if (ageGroup === 'RT') rtCount++;
+                            }
+                        }
+                    });
+
                     const k = `a-${i}`;
                     const row = document.createElement('tr');
-                    row.innerHTML = `<td>${act}</td><td style="text-align: center;"><input type="number" class="ww-${k}" min="0" max="13" value="0" onchange="updateActivityTotals()" style="width: 60px; padding: 0.5rem; color: #000; font-weight: bold; font-size: 1rem; text-align: center;"></td><td style="text-align: center; font-weight: 600; font-size: 0.9rem;" id="ww-pct-${k}">0%</td><td style="text-align: center;"><input type="number" class="pi-${k}" min="0" max="6" value="0" onchange="updateActivityTotals()" style="width: 60px; padding: 0.5rem; color: #000; font-weight: bold; font-size: 1rem; text-align: center;"></td><td style="text-align: center; font-weight: 600; font-size: 0.9rem;" id="pi-pct-${k}">0%</td><td style="text-align: center;"><input type="number" class="tnt-${k}" min="0" max="14" value="0" onchange="updateActivityTotals()" style="width: 60px; padding: 0.5rem; color: #000; font-weight: bold; font-size: 1rem; text-align: center;"></td><td style="text-align: center; font-weight: 600; font-size: 0.9rem;" id="tnt-pct-${k}">0%</td><td style="text-align: center;"><input type="number" class="rt-${k}" min="0" max="35" value="0" onchange="updateActivityTotals()" style="width: 60px; padding: 0.5rem; color: #000; font-weight: bold; font-size: 1rem; text-align: center;"></td><td style="text-align: center; font-weight: 600; font-size: 0.9rem;" id="rt-pct-${k}">0%</td><td style="text-align: center; font-weight: 600;" id="total-${k}">0</td><td style="text-align: center; font-weight: 600;" id="pct-${k}">0%</td>`;
+                    row.innerHTML = `<td>${act}</td><td style="text-align: center;"><input type="number" class="ww-${k}" min="0" max="13" value="${wwCount}" onchange="updateActivityTotals()" style="width: 60px; padding: 0.5rem; color: #000; font-weight: bold; font-size: 1rem; text-align: center;"></td><td style="text-align: center; font-weight: 600; font-size: 0.9rem;" id="ww-pct-${k}">0%</td><td style="text-align: center;"><input type="number" class="pi-${k}" min="0" max="6" value="${piCount}" onchange="updateActivityTotals()" style="width: 60px; padding: 0.5rem; color: #000; font-weight: bold; font-size: 1rem; text-align: center;"></td><td style="text-align: center; font-weight: 600; font-size: 0.9rem;" id="pi-pct-${k}">0%</td><td style="text-align: center;"><input type="number" class="tnt-${k}" min="0" max="14" value="${tntCount}" onchange="updateActivityTotals()" style="width: 60px; padding: 0.5rem; color: #000; font-weight: bold; font-size: 1rem; text-align: center;"></td><td style="text-align: center; font-weight: 600; font-size: 0.9rem;" id="tnt-pct-${k}">0%</td><td style="text-align: center;"><input type="number" class="rt-${k}" min="0" max="35" value="${rtCount}" onchange="updateActivityTotals()" style="width: 60px; padding: 0.5rem; color: #000; font-weight: bold; font-size: 1rem; text-align: center;"></td><td style="text-align: center; font-weight: 600; font-size: 0.9rem;" id="rt-pct-${k}">0%</td><td style="text-align: center; font-weight: 600;" id="total-${k}">0</td><td style="text-align: center; font-weight: 600;" id="pct-${k}">0%</td>`;
                     tbody.appendChild(row);
                 });
                 console.log('Activities table initialized successfully');
@@ -2431,6 +2491,7 @@
 
             // Store child attendance data locally
             childAttendanceData[child] = acts;
+            saveAttendanceToLocalStorage();
             console.log('Stored attendance for', name, ':', acts);
             console.log('Current childAttendanceData:', childAttendanceData);
 
@@ -2987,6 +3048,9 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
+            // Load previously saved attendance data from browser storage
+            loadAttendanceFromLocalStorage();
+
             // DEBUG: Log page structure on load
             console.log('PAGE LOAD DEBUG:');
             console.log('Body height:', document.body.offsetHeight);
