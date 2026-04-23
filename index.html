@@ -1961,85 +1961,28 @@
             const childrenByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
             const childrenNoAttendanceByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
 
-            // Load ALL UNIQUE children from submissions table (most complete source)
-            let allChildren = [];
-            try {
-                if (supabaseClient) {
-                    const { data: submissions, error } = await supabaseClient
-                        .from('submissions')
-                        .select('child_name, age_group')
-                        .order('age_group, child_name');
+            // Find children with NO attendance - by age group (ORIGINAL CODE - from child-select dropdown)
+            childrenWithNoAttendance = [];
+            const childrenByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
+            const childrenNoAttendanceByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
+            const childSelect = document.getElementById('child-select');
+            if (childSelect) {
+                const options = childSelect.querySelectorAll('option');
+                options.forEach(opt => {
+                    if (opt.value) {
+                        const [childName, ageGroup] = opt.value.split('|');
+                        if (!childrenByAgeGroup[ageGroup]) childrenByAgeGroup[ageGroup] = [];
+                        childrenByAgeGroup[ageGroup].push(opt.value);
 
-                    if (!error && submissions && submissions.length > 0) {
-                        // Get unique children
-                        const uniqueChildren = {};
-                        submissions.forEach(entry => {
-                            const key = `${entry.child_name}|${entry.age_group}`;
-                            if (!uniqueChildren[key]) {
-                                uniqueChildren[key] = {
-                                    childName: entry.child_name,
-                                    ageGroup: entry.age_group,
-                                    childValue: key
-                                };
-                            }
-                        });
-                        allChildren = Object.values(uniqueChildren);
-                        console.log('Loaded', allChildren.length, 'unique children from submissions');
-                    }
-                }
-            } catch (e) {
-                console.log('Supabase submissions load failed:', e);
-            }
-
-            // If no children in submissions, try children table
-            if (allChildren.length === 0) {
-                try {
-                    if (supabaseClient) {
-                        const { data: supabaseChildren, error } = await supabaseClient
-                            .from('children')
-                            .select('child_name, age_group')
-                            .order('age_group, child_name');
-
-                        if (!error && supabaseChildren && supabaseChildren.length > 0) {
-                            allChildren = supabaseChildren.map(child => ({
-                                childName: child.child_name,
-                                ageGroup: child.age_group,
-                                childValue: `${child.child_name}|${child.age_group}`
-                            }));
-                            console.log('Loaded', allChildren.length, 'children from children table');
+                        // Check if this child has attendance recorded in childAttendanceData
+                        if (!childAttendanceData[opt.value]) {
+                            childrenWithNoAttendance.push({ childName, childValue: opt.value, ageGroup });
+                            if (!childrenNoAttendanceByAgeGroup[ageGroup]) childrenNoAttendanceByAgeGroup[ageGroup] = [];
+                            childrenNoAttendanceByAgeGroup[ageGroup].push(childName);
                         }
                     }
-                } catch (e) {
-                    console.log('Supabase children table load failed:', e);
-                }
-            }
-
-            // Fallback to local data if all else fails
-            if (allChildren.length === 0) {
-                Object.keys(fallbackChildrenByMother).forEach(mother => {
-                    fallbackChildrenByMother[mother].forEach(child => {
-                        allChildren.push({
-                            childName: child.child_name,
-                            ageGroup: child.age_group,
-                            childValue: `${child.child_name}|${child.age_group}`
-                        });
-                    });
                 });
-                console.log('Using fallback data:', allChildren.length, 'children');
             }
-
-            // Check which children have no attendance data
-            allChildren.forEach(child => {
-                if (!childrenByAgeGroup[child.ageGroup]) childrenByAgeGroup[child.ageGroup] = [];
-                childrenByAgeGroup[child.ageGroup].push(child.childValue);
-
-                // Check if this child has attendance recorded in childAttendanceData
-                if (!childAttendanceData[child.childValue]) {
-                    childrenWithNoAttendance.push({ childName: child.childName, childValue: child.childValue, ageGroup: child.ageGroup });
-                    if (!childrenNoAttendanceByAgeGroup[child.ageGroup]) childrenNoAttendanceByAgeGroup[child.ageGroup] = [];
-                    childrenNoAttendanceByAgeGroup[child.ageGroup].push(child.childName);
-                }
-            })
 
             // Calculate child percentages
             childrenTotal = allChildren.length; // Use actual count from Supabase
