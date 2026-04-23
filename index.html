@@ -1960,24 +1960,31 @@
             childrenWithNoAttendance = [];
             const childrenByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
             const childrenNoAttendanceByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
-            const childSelect = document.getElementById('child-select');
-            if (childSelect) {
-                const options = childSelect.querySelectorAll('option');
-                options.forEach(opt => {
-                    if (opt.value) {
-                        const [childName, ageGroup] = opt.value.split('|');
-                        if (!childrenByAgeGroup[ageGroup]) childrenByAgeGroup[ageGroup] = [];
-                        childrenByAgeGroup[ageGroup].push(opt.value);
 
-                        // Check if this child has attendance recorded in childAttendanceData
-                        if (!childAttendanceData[opt.value]) {
-                            childrenWithNoAttendance.push({ childName, childValue: opt.value, ageGroup });
-                            if (!childrenNoAttendanceByAgeGroup[ageGroup]) childrenNoAttendanceByAgeGroup[ageGroup] = [];
-                            childrenNoAttendanceByAgeGroup[ageGroup].push(childName);
-                        }
-                    }
+            // Get ALL children from the fallback data (which includes all 68 children)
+            const allChildren = [];
+            Object.keys(fallbackChildrenByMother).forEach(mother => {
+                fallbackChildrenByMother[mother].forEach(child => {
+                    allChildren.push({
+                        childName: child.child_name,
+                        ageGroup: child.age_group,
+                        childValue: `${child.child_name}|${child.age_group}`
+                    });
                 });
-            }
+            });
+
+            // Check which children have no attendance data
+            allChildren.forEach(child => {
+                if (!childrenByAgeGroup[child.ageGroup]) childrenByAgeGroup[child.ageGroup] = [];
+                childrenByAgeGroup[child.ageGroup].push(child.childValue);
+
+                // Check if this child has attendance recorded in childAttendanceData
+                if (!childAttendanceData[child.childValue]) {
+                    childrenWithNoAttendance.push({ childName: child.childName, childValue: child.childValue, ageGroup: child.ageGroup });
+                    if (!childrenNoAttendanceByAgeGroup[child.ageGroup]) childrenNoAttendanceByAgeGroup[child.ageGroup] = [];
+                    childrenNoAttendanceByAgeGroup[child.ageGroup].push(child.childName);
+                }
+            })
 
             // Calculate child percentages
             childrenTotal = 68;
@@ -2618,9 +2625,9 @@
 
             // Refresh ALL reports to show updated attendance
             updateDashboard();
+            initActivities();
             generateMissingDataReport();
             generateAttendanceDetailsReport();
-            generateChildActivitySummary();
 
             e.target.reset();
             document.getElementById('age-group-display').style.display = 'none';
