@@ -2097,6 +2097,23 @@
             // Section 1 DEACTIVATED - Mothers with no participation data
             // This section is intentionally disabled
 
+            // Calculate missing children statistics
+            childrenTotal = Object.keys(childrenByAgeGroup).reduce((sum, ageGroup) => {
+                return sum + (childrenByAgeGroup[ageGroup] ? childrenByAgeGroup[ageGroup].length : 0);
+            }, 0);
+            
+            childrenPct = childrenTotal > 0 ? Math.round((childrenWithNoAttendance.length / childrenTotal) * 100) : 0;
+            
+            // Calculate by age group
+            ['WW', 'PI', 'TNT', 'RT'].forEach(ageGroup => {
+                const totalInGroup = childrenByAgeGroup[ageGroup] ? childrenByAgeGroup[ageGroup].length : 0;
+                const missingInGroup = childrenNoAttendanceByAgeGroup[ageGroup] ? childrenNoAttendanceByAgeGroup[ageGroup].length : 0;
+                const pct = totalInGroup > 0 ? Math.round((missingInGroup / totalInGroup) * 100) : 0;
+                ageGroupPcts[ageGroup] = { count: missingInGroup, pct: pct };
+                if (!ageGroupTotals) ageGroupTotals = {};
+                ageGroupTotals[ageGroup] = totalInGroup;
+            });
+
             // Build report HTML
             let childrenHtml = '<strong style="color: #1e293b; display: block; margin-bottom: 1rem;">' + childrenWithNoAttendance.length + ' of ' + childrenTotal + ' children (' + childrenPct + '%) need attendance:</strong>';
             if (childrenWithNoAttendance.length > 0) {
