@@ -1438,21 +1438,29 @@
 
         // Load mothers from Supabase at page initialization
         async function loadMothersFromSupabase() {
-            try {
-                if (!supabaseClient) {
-                    console.log('Supabase client not initialized, using fallback data');
-                    allMothers = [...fallbackMothers];
-                    motherContactsMap = {};
-                    fallbackMotherContacts.forEach(m => {
-                        motherContactsMap[m.name] = m;
-                    });
-                    return;
-                }
+            if (!supabaseClient) {
+                console.log('Supabase client not initialized, using fallback data');
+                allMothers = [...fallbackMothers];
+                motherContactsMap = {};
+                fallbackMotherContacts.forEach(m => {
+                    motherContactsMap[m.name] = m;
+                });
+                return;
+            }
 
-                const { data, error } = await supabaseClient
+            // Add timeout - if Supabase doesn't respond in 3 seconds, use fallback
+            try {
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Supabase timeout')), 3000)
+                );
+
+                const queryPromise = supabaseClient
                     .from('mothers')
                     .select('mother_name, phone, email')
                     .order('mother_name');
+
+                const result = await Promise.race([queryPromise, timeoutPromise]);
+                const { data, error } = result;
 
                 if (error) {
                     // Suppress known DataCloneError - use fallback data
@@ -2216,46 +2224,35 @@
                 return;
             }
 
-                    // Clear all options except placeholder
-                    childSelect.innerHTML = '<option value="">-- Select your child --</option>';
+            // Clear all options except placeholder
+            childSelect.innerHTML = '<option value="">-- Select your child --</option>';
 
-                    // Group by age group
-                    const byAgeGroup = {};
-                    childrenData.forEach(child => {
-                        if (!byAgeGroup[child.age_group]) byAgeGroup[child.age_group] = [];
-                        byAgeGroup[child.age_group].push(child.child_name);
-                    });
+            // Group by age group
+            const byAgeGroup = {};
+            childrenData.forEach(child => {
+                if (!byAgeGroup[child.age_group]) byAgeGroup[child.age_group] = [];
+                byAgeGroup[child.age_group].push(child.child_name);
+            });
 
-                    // Create optgroups for each age group
-                    const ageGroupLabels = {
-                        'WW': 'WW (Ages 2-5)',
-                        'PI': 'PI (Ages 6-9)',
-                        'TNT': 'TNT (Ages 10-12)',
-                        'RT': 'RT (Ages 13-19)'
-                    };
+            // Create optgroups for each age group
+            const ageGroupLabels = {
+                'WW': 'WW (Ages 2-5)',
+                'PI': 'PI (Ages 6-9)',
+                'TNT': 'TNT (Ages 10-12)',
+                'RT': 'RT (Ages 13-19)'
+            };
 
-                    Object.keys(byAgeGroup).sort().forEach(ageGroup => {
-                        const optgroup = document.createElement('optgroup');
-                        optgroup.label = ageGroupLabels[ageGroup] || ageGroup;
-                        byAgeGroup[ageGroup].forEach(childName => {
-                            const option = document.createElement('option');
-                            option.value = `${childName}|${ageGroup}`;
-                            option.textContent = childName;
-                            optgroup.appendChild(option);
-                        });
-                        childSelect.appendChild(optgroup);
-                    });
-                } else {
-                    // Fallback: clear dropdown (no data available in test mode)
-                    childSelect.innerHTML = '<option value="">-- Select your child --</option>';
-                }
-            } catch (err) {
-                // Suppress known compatibility errors
-                if (!err.message || !err.message.includes('DataCloneError')) {
-                    console.log('Children dropdown fallback mode');
-                }
-                childSelect.innerHTML = '<option value="">-- Select your child --</option>';
-            }
+            Object.keys(byAgeGroup).sort().forEach(ageGroup => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = ageGroupLabels[ageGroup] || ageGroup;
+                byAgeGroup[ageGroup].forEach(childName => {
+                    const option = document.createElement('option');
+                    option.value = `${childName}|${ageGroup}`;
+                    option.textContent = childName;
+                    optgroup.appendChild(option);
+                });
+                childSelect.appendChild(optgroup);
+            });
         }
 
         function updateMotherStatus() {
