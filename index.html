@@ -1134,7 +1134,7 @@
                             <th style="text-align: center;">RT (35)</th>
                             <th style="text-align: center;">RT %</th>
                             <th style="text-align: center;">Total</th>
-                            <th style="text-align: center;">% of 68</th>
+                            <th style="text-align: center;">% of Total</th>
                         </tr>
                     </thead>
                     <tbody id="activities-tbody"></tbody>
@@ -2011,7 +2011,7 @@
             })
 
             // Calculate child percentages
-            childrenTotal = 68;
+            childrenTotal = allChildren.length; // Use actual count from Supabase
             childrenPct = Math.round((childrenWithNoAttendance.length / childrenTotal) * 100);
             ageGroupTotals = { WW: 13, PI: 6, TNT: 14, RT: 35 };
             ageGroupPcts = {};
@@ -2505,7 +2505,7 @@
                 const rtEl = document.querySelector(`.rt-${k}`);
                 if (!wwEl || !piEl || !tntEl || !rtEl) return;
                 const ww = parseInt(wwEl.value) || 0, pi = parseInt(piEl.value) || 0, tnt = parseInt(tntEl.value) || 0, rt = parseInt(rtEl.value) || 0;
-                const tot = ww + pi + tnt + rt, pct = Math.round((tot / 68) * 100);
+                const tot = ww + pi + tnt + rt, pct = Math.round((tot / childrenTotal) * 100);
                 const wwPct = Math.round((ww / 13) * 100), piPct = Math.round((pi / 6) * 100), tntPct = Math.round((tnt / 14) * 100), rtPct = Math.round((rt / 35) * 100);
                 const wwPctEl = document.getElementById(`ww-pct-${k}`), piPctEl = document.getElementById(`pi-pct-${k}`), tntPctEl = document.getElementById(`tnt-pct-${k}`), rtPctEl = document.getElementById(`rt-pct-${k}`);
                 if (wwPctEl) wwPctEl.textContent = wwPct + '%';
