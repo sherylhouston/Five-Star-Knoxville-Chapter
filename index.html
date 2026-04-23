@@ -2098,21 +2098,24 @@
             // This section is intentionally disabled
 
             // Calculate missing children statistics
-            childrenTotal = Object.keys(childrenByAgeGroup).reduce((sum, ageGroup) => {
-                return sum + (childrenByAgeGroup[ageGroup] ? childrenByAgeGroup[ageGroup].length : 0);
-            }, 0);
+            // Count total children by summing all missing + children with attendance
+            const totalChildrenByAge = { WW: 0, PI: 0, TNT: 0, RT: 0 };
             
-            childrenPct = childrenTotal > 0 ? Math.round((childrenWithNoAttendance.length / childrenTotal) * 100) : 0;
-            
-            // Calculate by age group
             ['WW', 'PI', 'TNT', 'RT'].forEach(ageGroup => {
-                const totalInGroup = childrenByAgeGroup[ageGroup] ? childrenByAgeGroup[ageGroup].length : 0;
-                const missingInGroup = childrenNoAttendanceByAgeGroup[ageGroup] ? childrenNoAttendanceByAgeGroup[ageGroup].length : 0;
-                const pct = totalInGroup > 0 ? Math.round((missingInGroup / totalInGroup) * 100) : 0;
-                ageGroupPcts[ageGroup] = { count: missingInGroup, pct: pct };
-                if (!ageGroupTotals) ageGroupTotals = {};
-                ageGroupTotals[ageGroup] = totalInGroup;
+                const missingCount = childrenNoAttendanceByAgeGroup[ageGroup] ? childrenNoAttendanceByAgeGroup[ageGroup].length : 0;
+                const withAttendanceByAge = Object.keys(childAttendanceData).filter(key => {
+                    return key.endsWith('|' + ageGroup);
+                }).length;
+                totalChildrenByAge[ageGroup] = missingCount + withAttendanceByAge;
+                ageGroupPcts[ageGroup] = { 
+                    count: missingCount, 
+                    pct: totalChildrenByAge[ageGroup] > 0 ? Math.round((missingCount / totalChildrenByAge[ageGroup]) * 100) : 0
+                };
+                ageGroupTotals[ageGroup] = totalChildrenByAge[ageGroup];
             });
+            
+            childrenTotal = Object.values(totalChildrenByAge).reduce((sum, count) => sum + count, 0);
+            childrenPct = childrenTotal > 0 ? Math.round((childrenWithNoAttendance.length / childrenTotal) * 100) : 0;
 
             // Build report HTML
             let childrenHtml = '<strong style="color: #1e293b; display: block; margin-bottom: 1rem;">' + childrenWithNoAttendance.length + ' of ' + childrenTotal + ' children (' + childrenPct + '%) need attendance:</strong>';
