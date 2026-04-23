@@ -312,13 +312,16 @@
                                 <option value="Juliette Toney-Isang|WW">Juliette Toney-Isang</option>
                                 <option value="Zya Vaughn|WW">Zya Vaughn</option>
                             </optgroup>
-                            <optgroup label="PI (Ages 6-9) - 6 children">
+                            <optgroup label="PI (Ages 6-9) - 9 children">
                                 <option value="Cameron Allen|PI">Cameron Allen</option>
                                 <option value="Malcom Anderson|PI">Malcom Anderson</option>
-                                <option value="Jada Jackson|PI">Jada Jackson</option>
-                                <option value="Krystal Jackson|PI">Krystal Jackson</option>
-                                <option value="Aniyah Martinez|PI">Aniyah Martinez</option>
-                                <option value="Tiara Powell|PI">Tiara Powell</option>
+                                <option value="Parker Middleton|PI">Parker Middleton</option>
+                                <option value="Gianna Kendrick|PI">Gianna Kendrick</option>
+                                <option value="Chandler Malone|PI">Chandler Malone</option>
+                                <option value="Sebastian Waters|PI">Sebastian Waters</option>
+                                <option value="Briseis Charles|PI">Briseis Charles</option>
+                                <option value="Camryn Phelps|PI">Camryn Phelps</option>
+                                <option value="Brian Russell, Jr|PI">Brian Russell, Jr</option>
                             </optgroup>
                             <optgroup label="TNT (Ages 10-12) - 14 children">
                                 <option value="Maxwell Dorsey|TNT">Maxwell Dorsey</option>
@@ -1975,9 +1978,9 @@
             }
 
             // Calculate child percentages
-            childrenTotal = 68;
+            childrenTotal = 71;
             childrenPct = Math.round((childrenWithNoAttendance.length / childrenTotal) * 100);
-            ageGroupTotals = { WW: 13, PI: 6, TNT: 14, RT: 35 };
+            ageGroupTotals = { WW: 13, PI: 9, TNT: 14, RT: 35 };
             ageGroupPcts = {};
             for (let ag in ageGroupTotals) {
                 const noDataCount = childrenNoAttendanceByAgeGroup[ag] ? childrenNoAttendanceByAgeGroup[ag].length : 0;
