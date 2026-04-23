@@ -1364,20 +1364,41 @@
                 const stored = localStorage.getItem('childAttendanceData');
                 if (stored) {
                     childAttendanceData = JSON.parse(stored);
-                    console.log('✅ Loaded attendance data from storage:', Object.keys(childAttendanceData).length, 'children');
+                    console.log('✅ Loaded attendance data from localStorage:', Object.keys(childAttendanceData).length, 'children');
+                    return;
+                }
+                // Fallback to sessionStorage if localStorage is empty
+                const sessionStored = sessionStorage.getItem('childAttendanceData');
+                if (sessionStored) {
+                    childAttendanceData = JSON.parse(sessionStored);
+                    console.warn('⚠️ Loaded attendance data from sessionStorage:', Object.keys(childAttendanceData).length, 'children');
                 }
             } catch (e) {
-                console.log('Could not load from localStorage:', e);
+                console.error('Could not load from storage:', e);
             }
         }
 
-        // Save attendance data to localStorage
+        // Save attendance data to localStorage with verification
         function saveAttendanceToLocalStorage() {
             try {
-                localStorage.setItem('childAttendanceData', JSON.stringify(childAttendanceData));
-                console.log('✅ Saved attendance data to storage');
+                const dataStr = JSON.stringify(childAttendanceData);
+                localStorage.setItem('childAttendanceData', dataStr);
+                // Verify save succeeded
+                const verify = localStorage.getItem('childAttendanceData');
+                if (verify === dataStr) {
+                    console.log('✅ Verified: Attendance data saved to localStorage');
+                } else {
+                    throw new Error('Verification failed - data mismatch');
+                }
             } catch (e) {
-                console.log('Could not save to localStorage:', e);
+                console.error('❌ localStorage failed:', e.message);
+                try {
+                    // Fallback to sessionStorage
+                    sessionStorage.setItem('childAttendanceData', JSON.stringify(childAttendanceData));
+                    console.warn('⚠️ Using sessionStorage (data lost on page close)');
+                } catch (e2) {
+                    console.error('❌ All storage failed:', e2.message);
+                }
             }
         }
 
@@ -2636,8 +2657,12 @@
                 alert('⚠️ ' + name + ' attendance recorded locally.\n\nTo save to database:\n1. Complete Supabase setup (April 22)\n2. Run the SQL scripts\n3. Refresh this page\n\nOr enable Test Mode at the top to test without Supabase.\n\nReady for another child? Select and submit again.');
             }
 
-            // Refresh the missing data report to show updated attendance
+            // Refresh ALL reports and UI elements to show updated attendance in real-time
             generateMissingDataReport();
+            initActivities();
+            generateAttendanceDetailsReport();
+            updateDashboard();
+            populateEditChildSelect();  // Update the edit dropdown to show newly submitted child
 
             e.target.reset();
             document.getElementById('age-group-display').style.display = 'none';
