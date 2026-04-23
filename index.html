@@ -1378,6 +1378,43 @@
             }
         }
 
+        // Load attendance data from Supabase (syncs across devices)
+        async function loadAttendanceFromSupabase() {
+            if (!supabaseClient) {
+                console.log('⚠️ Supabase not connected, using localStorage only');
+                return;
+            }
+            try {
+                const { data, error } = await supabaseClient.from('submissions').select('*');
+                if (error) throw error;
+                if (data && data.length > 0) {
+                    console.log('📥 Loading attendance from Supabase:', data.length, 'entries');
+                    // Group activities by child
+                    childAttendanceData = {};
+                    data.forEach(entry => {
+                        const childKey = entry.child_name + '|' + entry.age_group;
+                        if (!childAttendanceData[childKey]) {
+                            childAttendanceData[childKey] = [];
+                        }
+                        // Add activities if they're in the entry
+                        if (entry.activities && Array.isArray(entry.activities)) {
+                            entry.activities.forEach(act => {
+                                if (!childAttendanceData[childKey].includes(act)) {
+                                    childAttendanceData[childKey].push(act);
+                                }
+                            });
+                        }
+                    });
+                    console.log('✅ Loaded', Object.keys(childAttendanceData).length, 'children from Supabase');
+                    saveAttendanceToLocalStorage(); // Also save to localStorage for offline access
+                } else {
+                    console.log('No attendance data in Supabase yet');
+                }
+            } catch (err) {
+                console.error('Could not load from Supabase:', err.message);
+            }
+        }
+
         // Fallback children data from Supabase (in case database connection fails)
         const fallbackChildrenByMother = {
             'Erika Allen': [{ child_name: 'Audrey Allen', age_group: 'WW' }, { child_name: 'Cameron Allen', age_group: 'PI' }],
@@ -3136,6 +3173,9 @@
 
             // Load mothers from Supabase (or use fallback)
             await loadMothersFromSupabase();
+
+            // Load child attendance data from Supabase (syncs across devices)
+            await loadAttendanceFromSupabase();
 
             // Populate mother selectors across all tabs
             populateMotherSelectors();
