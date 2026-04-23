@@ -1318,24 +1318,11 @@
     <script>
         const SUPABASE_URL = 'https://eduqqsoyiipapkgctxme.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_WG_39AMSKru8AEvrJ8YTxg_bV80VJZC';
-
-        // Supabase initialization - proper async handling
-        async function initSupabase() {
-            // Wait for Supabase library to load from CDN
-            let attempts = 0;
-            while (!window.supabase && attempts < 20) {
-                await new Promise(resolve => setTimeout(resolve, 50));
-                attempts++;
-            }
-            if (window.supabase && window.supabase.createClient) {
-                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                console.log('✅ Supabase initialized successfully');
-            } else {
-                console.error('❌ Supabase library failed to load from CDN');
-            }
-        }
         let supabaseClient;
 
+        if (window.supabase && window.supabase.createClient) {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        }
 
         // Fallback hardcoded data (used in Test Mode)
         const fallbackMothers = ['Erika Allen', 'Leasa Woods Anderson', 'Vidya Barnes', 'Myisha Dorsey', 'Nayasha Farrior', 'Janera Felton', 'Chantrelle Harris', 'ReShanta Hazelbaker', 'Sheryl Houston', 'Adia Jackson', 'Eboni James', 'Sharon Jean-Philippe', 'LaTonya Jordan', 'Melba Kendrick', 'Natasha Leeth', 'Shalonda Kirk', 'Nikki Kitchen', 'Maria Loggins', 'Meshelle Lowery', 'Tiffany Malone', 'Kourtnie Moore', 'Summer Moore', 'Tiffani Moss', 'Althea Murphy-Price', 'Nicie Murphy', 'LaToya Myles', 'Clarice Phelps', 'Fanesha Powell', 'Danielle Procope Bell', 'Rekisha Rhyan', 'Aja Rosser', 'LaTonya Rudolph', 'Jada Russell', 'Brittonya Sparks', 'Jeanette Toney', 'Katatra Vasquez', 'Syreeta Vaughn', 'Kesha Waters', 'Shenika Welch-Charles'];
@@ -1393,46 +1380,18 @@
 
         // Fallback children data from Supabase (in case database connection fails)
         const fallbackChildrenByMother = {
-            'Adia Jackson': [{ child_name: 'Denver Jackson', age_group: 'RT' }],
-            'Aja Rosser': [{ child_name: 'Naomi Rosser', age_group: 'RT' }, { child_name: 'Lydia Rosser', age_group: 'TNT' }],
-            'Althea Murphy-Price': [{ child_name: 'Ida Roberson', age_group: 'RT' }, { child_name: 'Emery Roberson', age_group: 'TNT' }],
-            'Brittonya Sparks': [{ child_name: 'Gabrielle Sparks', age_group: 'RT' }, { child_name: 'Seth Sparks', age_group: 'RT' }],
-            'Chantrelle Harris': [{ child_name: 'Parker Middleton', age_group: 'PI' }],
-            'Clarice Phelps': [{ child_name: 'Camryn Phelps', age_group: 'PI' }, { child_name: 'Jaxson Phelps', age_group: 'WW' }, { child_name: 'Jayson  Phelps', age_group: 'WW' }],
-            'Danielle Procope Bell': [{ child_name: 'Josiah Bell', age_group: 'WW' }, { child_name: 'Judah Bell', age_group: 'WW' }],
-            'Eboni James': [{ child_name: 'Kingston James', age_group: 'WW' }],
-            'Erika Allen': [{ child_name: 'Cameron Allen', age_group: 'PI' }, { child_name: 'Audrey Allen', age_group: 'WW' }],
-            'Fanesha Powell': [{ child_name: 'Camden Powell', age_group: 'RT' }, { child_name: 'Jakhi Powell', age_group: 'RT' }, { child_name: 'Carter Powell', age_group: 'TNT' }],
-            'Jada Russell': [{ child_name: 'Brian Russell, Jr', age_group: 'PI' }, { child_name: 'Bryson Russell', age_group: 'WW' }],
-            'Janera Felton': [{ child_name: 'Leona Felton', age_group: 'WW' }],
-            'Jeanette Toney': [{ child_name: 'Jaxson Toney-Isang', age_group: 'WW' }, { child_name: 'Juliette Toney-Isang', age_group: 'WW' }],
-            'Katatra Vasquez': [{ child_name: 'Dominic Vasquez', age_group: 'RT' }, { child_name: 'Nina Vasquez', age_group: 'RT' }],
-            'Kesha Waters': [{ child_name: 'Sebastian Waters', age_group: 'PI' }],
-            'Kourtnie Moore': [{ child_name: 'Christian Moore', age_group: 'RT' }, { child_name: 'Gabriel Moore', age_group: 'TNT' }],
-            'LaTonya Jordan': [{ child_name: 'Layla  Jordan', age_group: 'RT' }, { child_name: 'Kyndall Jordan', age_group: 'TNT' }, { child_name: 'Maya  Jordan', age_group: 'TNT' }],
-            'LaTonya Rudolph': [{ child_name: 'London Rudolph', age_group: 'RT' }],
-            'LaToya Myles': [{ child_name: 'Chelsea Myles', age_group: 'RT' }, { child_name: 'Craig Myles', age_group: 'RT' }],
-            'Leasa Woods Anderson': [{ child_name: 'Malcom Anderson', age_group: 'PI' }, { child_name: 'Corrine Anderson', age_group: 'TNT' }],
-            'Maria Loggins': [{ child_name: 'Christopher Loggins', age_group: 'RT' }, { child_name: 'Garrison Loggins', age_group: 'TNT' }],
-            'Melba Kendrick': [{ child_name: 'Gianna Kendrick', age_group: 'PI' }, { child_name: 'Noah Kendrick', age_group: 'RT' }],
-            'Meshelle Lowery': [{ child_name: 'Maliya Lowery', age_group: 'RT' }],
-            'Myisha Dorsey': [{ child_name: 'Morgan Dorsey', age_group: 'RT' }, { child_name: 'Maxwell Dorsey', age_group: 'TNT' }],
-            'Natasha Leeth': [{ child_name: 'Alex Leeth', age_group: 'RT' }],
-            'Nayasha Farrior': [{ child_name: 'Jordan Farrior', age_group: 'RT' }],
-            'Nicie Murphy': [{ child_name: 'Anaiah Murphy', age_group: 'RT' }, { child_name: 'Mathias Murphy', age_group: 'RT' }, { child_name: 'Ezrah Murphy', age_group: 'WW' }],
-            'Nikki Kitchen': [{ child_name: 'Logan Kitchen', age_group: 'RT' }, { child_name: 'Blake Kitchen', age_group: 'TNT' }],
-            'ReShanta Hazelbaker': [{ child_name: 'Brayden Hazelbaker', age_group: 'RT' }, { child_name: 'Chloe  Hazelbaker', age_group: 'RT' }],
-            'Rekisha Rhyan': [{ child_name: 'Prenstyn Rhyan', age_group: 'TNT' }],
-            'Shalonda Kirk': [{ child_name: 'Carsyn Kirk', age_group: 'RT' }, { child_name: 'Chandler Kirk', age_group: 'WW' }],
-            'Sharon Jean-Philippe': [{ child_name: 'Seth Jean-Philippe', age_group: 'RT' }, { child_name: 'Sidney Jean-Philippe', age_group: 'RT' }],
-            'Shenika Welch-Charles': [{ child_name: 'Briseis Charles', age_group: 'PI' }, { child_name: 'Daenerys Charles', age_group: 'RT' }],
-            'Sheryl Houston': [{ child_name: 'Camden Houston', age_group: 'RT' }, { child_name: 'Shelby Houston', age_group: 'RT' }],
-            'Summer Moore': [{ child_name: 'Jamerson Moore', age_group: 'RT' }, { child_name: 'Liam Moore', age_group: 'TNT' }],
-            'Syreeta Vaughn': [{ child_name: 'Nia Vaughn', age_group: 'RT' }, { child_name: 'Jada Vaughn', age_group: 'TNT' }, { child_name: 'Zya Vaughn', age_group: 'WW' }],
-            'Tiffani Moss': [{ child_name: 'Mason Moss', age_group: 'RT' }],
-            'Tiffany Malone': [{ child_name: 'Chandler Malone', age_group: 'PI' }, { child_name: 'Caleb Malone', age_group: 'TNT' }],
+            'Erika Allen': [{ child_name: 'Audrey Allen', age_group: 'WW' }, { child_name: 'Cameron Allen', age_group: 'PI' }],
+            'Leasa Woods Anderson': [{ child_name: 'Corrine Anderson', age_group: 'TNT' }, { child_name: 'Malcom Anderson', age_group: 'PI' }],
             'Vidya Barnes': [{ child_name: 'Malia Barnes', age_group: 'RT' }],
+            'Myisha Dorsey': [{ child_name: 'Morgan Dorsey', age_group: 'RT' }, { child_name: 'Maxwell Dorsey', age_group: 'TNT' }],
+            'Nayasha Farrior': [{ child_name: 'Jordan Farrior', age_group: 'RT' }],
+            'Janera Felton': [{ child_name: 'Leona Felton', age_group: 'WW' }],
+            'Chantrelle Harris': [{ child_name: 'Parker Middleton', age_group: 'PI' }],
+            'ReShanta Hazelbaker': [{ child_name: 'Chloe Hazelbaker', age_group: 'RT' }, { child_name: 'Brayden Hazelbaker', age_group: 'RT' }],
+            'Sheryl Houston': [{ child_name: 'Camden Houston', age_group: 'RT' }, { child_name: 'Shelby Houston', age_group: 'RT' }],
+            'Adia Jackson': [{ child_name: 'Denver Jackson', age_group: 'RT' }]
         };
+
 
         let testMode = false;
 
@@ -1585,7 +1544,7 @@
             }
         }
 
-        async function loadSampleData() {
+        function loadSampleData() {
             try {
                 console.log('Starting loadSampleData...');
                 alert('Loading sample data...\n\nThis will populate:\n• 5 sample mothers\n• Activity attendance\n• Meeting data\n• Star ratings');
@@ -1698,7 +1657,7 @@
                 console.log('childAttendanceData:', childAttendanceData);
 
                 updateDashboard();
-                await generateMissingDataReport();
+                generateMissingDataReport();
                 console.log('Dashboard updated');
 
                 alert('✅ Sample data loaded!\n\nCheck all tabs to see how the dashboard looks when populated.\n\nAll data is local - no Supabase needed!');
@@ -1708,14 +1667,14 @@
             }
         }
 
-        async function switchTab(event, tabName) {
+        function switchTab(event, tabName) {
             console.log('switchTab called with tabName:', tabName);
 
             // Special handling for missing-data - use modal instead
             if (tabName === 'missing-data') {
                 console.log('Opening missing data modal');
                 document.getElementById('missing-data-modal').style.display = 'block';
-                await generateMissingDataReport();
+                generateMissingDataReport();
                 return;
             }
 
@@ -1929,72 +1888,9 @@
             refreshReminderData();
         }
 
-
-        async function loadAllAttendanceData() {
-            console.log('Loading all attendance data from Supabase...');
-            
-            // First load localStorage data
-            try {
-                const stored = localStorage.getItem('childAttendanceData');
-                if (stored) {
-                    childAttendanceData = JSON.parse(stored);
-                    console.log('✅ Loaded from localStorage:', Object.keys(childAttendanceData).length, 'children');
-                }
-            } catch (e) {
-                console.log('Could not load from localStorage:', e);
-            }
-
-            // Then load from Supabase submissions table
-            if (supabaseClient) {
-                try {
-                    const { data, error } = await supabaseClient.from('submissions').select('child_name, age_group, activities');
-                    if (error) throw error;
-                    if (data && data.length > 0) {
-                        console.log('✅ Loading', data.length, 'submissions from Supabase');
-                        data.forEach(sub => {
-                            const key = sub.child_name + '|' + sub.age_group;
-                            if (!childAttendanceData[key]) {
-                                childAttendanceData[key] = [];
-                            }
-                            let activities = sub.activities;
-                            if (typeof activities === 'string') {
-                                try {
-                                    activities = JSON.parse(activities);
-                                } catch (e) {
-                                    activities = [activities];
-                                }
-                            }
-                            if (Array.isArray(activities)) {
-                                childAttendanceData[key] = [...new Set([...childAttendanceData[key], ...activities])];
-                            }
-                        });
-                        console.log('✅ Total children with attendance after Supabase load:', Object.keys(childAttendanceData).length);
-                    }
-                } catch (err) {
-                    console.error('❌ Error loading from Supabase submissions:', err.message);
-                }
-            }
-        }
-
-        async function generateMissingDataReport() {
-            await loadAllAttendanceData();
+        function generateMissingDataReport() {
             console.log('Generating missing data report...');
             console.log('Current childAttendanceData:', childAttendanceData);
-
-            // Load ALL children from Supabase children table
-            let allChildrenFromDB = [];
-            if (supabaseClient) {
-                try {
-                    const { data, error } = await supabaseClient.from('children').select('*');
-                    if (error) throw error;
-                    if (data && data.length > 0) {
-                        allChildrenFromDB = data;
-                        console.log('✅ Loaded', allChildrenFromDB.length, 'children from Supabase');
-                    }
-                } catch (err) {
-                    console.error('❌ Error loading children from Supabase:', err.message);
-                }
-            }
 
             // DEBUG: Verify tab element exists and is visible
             const missingDataTab = document.getElementById('missing-data');
@@ -2027,49 +1923,42 @@
             mothersPct = Math.round((mothersWithNoData.length / mothersTotal) * 100);
 
             // Find children with NO attendance - by age group
-            // Find children with NO attendance - use Supabase data if available
             childrenWithNoAttendance = [];
             const childrenByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
             const childrenNoAttendanceByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
-            
-            if (allChildrenFromDB.length > 0) {
-                // Process children from Supabase database
-                allChildrenFromDB.forEach(childRecord => {
-                    const childKey = childRecord.child_name + '|' + childRecord.age_group;
-                    if (!childrenByAgeGroup[childRecord.age_group]) childrenByAgeGroup[childRecord.age_group] = [];
-                    childrenByAgeGroup[childRecord.age_group].push(childKey);
-                    
-                    if (!childAttendanceData[childKey]) {
-                        childrenWithNoAttendance.push({ 
-                            childName: childRecord.child_name, 
-                            childValue: childKey, 
-                            ageGroup: childRecord.age_group 
-                        });
-                        if (!childrenNoAttendanceByAgeGroup[childRecord.age_group]) {
-                            childrenNoAttendanceByAgeGroup[childRecord.age_group] = [];
+            const childSelect = document.getElementById('child-select');
+            if (childSelect) {
+                const options = childSelect.querySelectorAll('option');
+                options.forEach(opt => {
+                    if (opt.value) {
+                        const [childName, ageGroup] = opt.value.split('|');
+                        if (!childrenByAgeGroup[ageGroup]) childrenByAgeGroup[ageGroup] = [];
+                        childrenByAgeGroup[ageGroup].push(opt.value);
+
+                        // Check if this child has attendance recorded in childAttendanceData
+                        if (!childAttendanceData[opt.value]) {
+                            childrenWithNoAttendance.push({ childName, childValue: opt.value, ageGroup });
+                            if (!childrenNoAttendanceByAgeGroup[ageGroup]) childrenNoAttendanceByAgeGroup[ageGroup] = [];
+                            childrenNoAttendanceByAgeGroup[ageGroup].push(childName);
                         }
-                        childrenNoAttendanceByAgeGroup[childRecord.age_group].push(childRecord.child_name);
                     }
                 });
-            } else {
-                // Fallback to dropdown if Supabase data not available
-                const childSelect = document.getElementById('child-select');
-                if (childSelect) {
-                    const options = childSelect.querySelectorAll('option');
-                    options.forEach(opt => {
-                        if (opt.value) {
-                            const [childName, ageGroup] = opt.value.split('|');
-                            if (!childrenByAgeGroup[ageGroup]) childrenByAgeGroup[ageGroup] = [];
-                            childrenByAgeGroup[ageGroup].push(opt.value);
-                            if (!childAttendanceData[opt.value]) {
-                                childrenWithNoAttendance.push({ childName, childValue: opt.value, ageGroup });
-                                if (!childrenNoAttendanceByAgeGroup[ageGroup]) childrenNoAttendanceByAgeGroup[ageGroup] = [];
-                                childrenNoAttendanceByAgeGroup[ageGroup].push(childName);
-                            }
-                        }
-                    });
-                }
             }
+
+            // Calculate child percentages
+            childrenTotal = 68;
+            childrenPct = Math.round((childrenWithNoAttendance.length / childrenTotal) * 100);
+            ageGroupTotals = { WW: 13, PI: 6, TNT: 14, RT: 35 };
+            ageGroupPcts = {};
+            for (let ag in ageGroupTotals) {
+                const noDataCount = childrenNoAttendanceByAgeGroup[ag] ? childrenNoAttendanceByAgeGroup[ag].length : 0;
+                ageGroupPcts[ag] = { count: noDataCount, pct: Math.round((noDataCount / ageGroupTotals[ag]) * 100) };
+            }
+
+            // Find mothers with children missing attendance data
+            // Map children to mothers by matching last names
+            mothersWithChildrenMissingAttendance = [];
+            const mappedChildrenToMothers = {};
 
             allMothers.forEach(mother => {
                 const motherLastName = mother.split(' ').pop().toLowerCase();
@@ -2096,26 +1985,6 @@
 
             // Section 1 DEACTIVATED - Mothers with no participation data
             // This section is intentionally disabled
-
-            // Calculate missing children statistics
-            // Count total children by summing all missing + children with attendance
-            const totalChildrenByAge = { WW: 0, PI: 0, TNT: 0, RT: 0 };
-            
-            ['WW', 'PI', 'TNT', 'RT'].forEach(ageGroup => {
-                const missingCount = childrenNoAttendanceByAgeGroup[ageGroup] ? childrenNoAttendanceByAgeGroup[ageGroup].length : 0;
-                const withAttendanceByAge = Object.keys(childAttendanceData).filter(key => {
-                    return key.endsWith('|' + ageGroup);
-                }).length;
-                totalChildrenByAge[ageGroup] = missingCount + withAttendanceByAge;
-                ageGroupPcts[ageGroup] = { 
-                    count: missingCount, 
-                    pct: totalChildrenByAge[ageGroup] > 0 ? Math.round((missingCount / totalChildrenByAge[ageGroup]) * 100) : 0
-                };
-                ageGroupTotals[ageGroup] = totalChildrenByAge[ageGroup];
-            });
-            
-            childrenTotal = Object.values(totalChildrenByAge).reduce((sum, count) => sum + count, 0);
-            childrenPct = childrenTotal > 0 ? Math.round((childrenWithNoAttendance.length / childrenTotal) * 100) : 0;
 
             // Build report HTML
             let childrenHtml = '<strong style="color: #1e293b; display: block; margin-bottom: 1rem;">' + childrenWithNoAttendance.length + ' of ' + childrenTotal + ' children (' + childrenPct + '%) need attendance:</strong>';
@@ -2714,7 +2583,7 @@
             }
 
             // Refresh the missing data report to show updated attendance
-            await generateMissingDataReport();
+            generateMissingDataReport();
 
             e.target.reset();
             document.getElementById('age-group-display').style.display = 'none';
@@ -3253,14 +3122,8 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
-            // CRITICAL: Wait for Supabase to initialize first
-            await initSupabase();
-            console.log('Supabase client ready:', !!supabaseClient);
-
-            // Load all attendance data from browser storage and Supabase
-
-
-            await loadAllAttendanceData();
+            // Load previously saved attendance data from browser storage
+            loadAttendanceFromLocalStorage();
 
             // DEBUG: Log page structure on load
             console.log('PAGE LOAD DEBUG:');
@@ -3283,7 +3146,7 @@
             loadEvidenceList();
             updateDashboard();
             updateMeetingDashboard();
-            await generateMissingDataReport();
+            generateMissingDataReport();
             refreshReminderData();
             checkDatabaseStatus();
         });
