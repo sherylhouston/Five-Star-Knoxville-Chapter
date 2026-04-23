@@ -1929,8 +1929,56 @@
             refreshReminderData();
         }
 
+
+        async function loadAllAttendanceData() {
+            console.log('Loading all attendance data from Supabase...');
+            
+            // First load localStorage data
+            try {
+                const stored = localStorage.getItem('childAttendanceData');
+                if (stored) {
+                    childAttendanceData = JSON.parse(stored);
+                    console.log('✅ Loaded from localStorage:', Object.keys(childAttendanceData).length, 'children');
+                }
+            } catch (e) {
+                console.log('Could not load from localStorage:', e);
+            }
+
+            // Then load from Supabase submissions table
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient.from('submissions').select('child_name, age_group, activities');
+                    if (error) throw error;
+                    if (data && data.length > 0) {
+                        console.log('✅ Loading', data.length, 'submissions from Supabase');
+                        data.forEach(sub => {
+                            const key = sub.child_name + '|' + sub.age_group;
+                            if (!childAttendanceData[key]) {
+                                childAttendanceData[key] = [];
+                            }
+                            let activities = sub.activities;
+                            if (typeof activities === 'string') {
+                                try {
+                                    activities = JSON.parse(activities);
+                                } catch (e) {
+                                    activities = [activities];
+                                }
+                            }
+                            if (Array.isArray(activities)) {
+                                childAttendanceData[key] = [...new Set([...childAttendanceData[key], ...activities])];
+                            }
+                        });
+                        console.log('✅ Total children with attendance after Supabase load:', Object.keys(childAttendanceData).length);
+                    }
+                } catch (err) {
+                    console.error('❌ Error loading from Supabase submissions:', err.message);
+                }
+            }
+        }
+
         async function generateMissingDataReport() {
-            console.log('Generating missing data report...');
+            await loadAllAttendanceData();
+            console.log(\'Generating missing data report...');
             console.log('Current childAttendanceData:', childAttendanceData);
 
             // Load ALL children from Supabase children table
@@ -3189,8 +3237,10 @@
             await initSupabase();
             console.log('Supabase client ready:', !!supabaseClient);
 
-            // Load previously saved attendance data from browser storage
-            loadAttendanceFromLocalStorage();
+            // Load all attendance data from browser storage and Supabase
+
+
+            await loadAllAttendanceData();
 
             // DEBUG: Log page structure on load
             console.log('PAGE LOAD DEBUG:');
