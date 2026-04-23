@@ -1137,7 +1137,7 @@
                             <th style="text-align: center;">RT (35)</th>
                             <th style="text-align: center;">RT %</th>
                             <th style="text-align: center;">Total</th>
-                            <th style="text-align: center;">% of 68</th>
+                            <th style="text-align: center;">% of 71</th>
                         </tr>
                     </thead>
                     <tbody id="activities-tbody"></tbody>
@@ -1434,7 +1434,7 @@
         let childrenPct = 0;
         let mothersPct = 0;
         let ageGroupPcts = { WW: {}, PI: {}, TNT: {}, RT: {} };
-        let ageGroupTotals = { WW: 0, PI: 0, TNT: 0, RT: 0 };
+        let ageGroupTotals = { WW: 13, PI: 9, TNT: 14, RT: 35 };
 
         // Fallback mother contact database (used in Test Mode)
         const fallbackMotherContacts = [
@@ -1920,6 +1920,23 @@
             refreshReminderData();
         }
 
+        
+        // Get all children from the authoritative fallback source (not just form)
+        function getAllChildren() {
+            const allChildren = [];
+            for (let motherName in fallbackChildrenByMother) {
+                fallbackChildrenByMother[motherName].forEach(childObj => {
+                    allChildren.push({
+                        childName: childObj.child_name,
+                        childValue: childObj.child_name + '|' + childObj.age_group,
+                        ageGroup: childObj.age_group,
+                        motherName: motherName
+                    });
+                });
+            }
+            return allChildren;
+        }
+
         function generateMissingDataReport() {
             console.log('Generating missing data report...');
             console.log('Current childAttendanceData:', childAttendanceData);
@@ -1935,18 +1952,29 @@
                 console.log('DEBUG: missing-data tab offsetWidth:', missingDataTab.offsetWidth);
             }
 
-            // Find mothers with NO participation data
+            // Find mothers with NO child attendance data
+            // A mother has submitted if ANY of her children have attendance records
             const mothersWithNoData = [];
             allMothers.forEach(m => {
-                const k = m.replace(/ /g, '-').replace(/\./g, '');
-                const workdayEl = document.querySelector(`.workday-${k}`);
-                const regionalEl = document.querySelector(`.regional-${k}`);
-                const nationalEl = document.querySelector(`.national-${k}`);
-
-                if (workdayEl && regionalEl && nationalEl) {
-                    if (!workdayEl.checked && !regionalEl.checked && !nationalEl.checked) {
-                        mothersWithNoData.push(m);
+                // Check if this mother has ANY children with attendance recorded
+                const motherLastName = m.split(' ').pop().toLowerCase();
+                let motherHasChildWithData = false;
+                
+                // Look through all children to find those matching this mother's last name
+                for (let childKey in childAttendanceData) {
+                    if (childKey) {
+                        const childName = childKey.split('|')[0];
+                        const childLastName = childName.split(' ').pop().toLowerCase();
+                        if (childLastName === motherLastName) {
+                            motherHasChildWithData = true;
+                            break;
+                        }
                     }
+                }
+                
+                // If mother has NO children with data recorded, she needs to submit
+                if (!motherHasChildWithData) {
+                    mothersWithNoData.push(m);
                 }
             });
 
@@ -1955,27 +1983,24 @@
             mothersPct = Math.round((mothersWithNoData.length / mothersTotal) * 100);
 
             // Find children with NO attendance - by age group
+            // Use fallbackChildrenByMother as authoritative source (not form dropdown)
             childrenWithNoAttendance = [];
             const childrenByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
             const childrenNoAttendanceByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
-            const childSelect = document.getElementById('child-select');
-            if (childSelect) {
-                const options = childSelect.querySelectorAll('option');
-                options.forEach(opt => {
-                    if (opt.value) {
-                        const [childName, ageGroup] = opt.value.split('|');
-                        if (!childrenByAgeGroup[ageGroup]) childrenByAgeGroup[ageGroup] = [];
-                        childrenByAgeGroup[ageGroup].push(opt.value);
+            const allChildrenList = getAllChildren();
+            
+            allChildrenList.forEach(childObj => {
+                const { childName, childValue, ageGroup } = childObj;
+                if (!childrenByAgeGroup[ageGroup]) childrenByAgeGroup[ageGroup] = [];
+                childrenByAgeGroup[ageGroup].push(childValue);
 
-                        // Check if this child has attendance recorded in childAttendanceData
-                        if (!childAttendanceData[opt.value]) {
-                            childrenWithNoAttendance.push({ childName, childValue: opt.value, ageGroup });
-                            if (!childrenNoAttendanceByAgeGroup[ageGroup]) childrenNoAttendanceByAgeGroup[ageGroup] = [];
-                            childrenNoAttendanceByAgeGroup[ageGroup].push(childName);
-                        }
-                    }
-                });
-            }
+                // Check if this child has attendance recorded in childAttendanceData
+                if (!childAttendanceData[childValue]) {
+                    childrenWithNoAttendance.push({ childName, childValue, ageGroup });
+                    if (!childrenNoAttendanceByAgeGroup[ageGroup]) childrenNoAttendanceByAgeGroup[ageGroup] = [];
+                    childrenNoAttendanceByAgeGroup[ageGroup].push(childName);
+                }
+            });
 
             // Calculate child percentages
             childrenTotal = 71;
@@ -2028,21 +2053,18 @@
             }
 
             let mothersHtml = '';
-            if (mothersWithChildrenMissingAttendance.length === 0) {
-                mothersHtml = '✅ All mothers\' children have attendance records!';
+            if (mothersWithNoData.length === 0) {
+                mothersHtml = '✅ All mothers have submitted child attendance data!';
             } else {
-                mothersHtml = '<strong style="color: #1e293b; display: block; margin-bottom: 1rem;">' + mothersWithChildrenMissingAttendance.length + ' mothers with children needing attendance:</strong>';
-                mothersWithChildrenMissingAttendance.forEach(({ motherName, children }) => {
+                mothersHtml = '<strong style="color: #1e293b; display: block; margin-bottom: 1rem;">' + mothersWithNoData.length + ' mothers (out of 39) still need to submit child attendance data:</strong>';
+                mothersWithNoData.forEach(motherName => {
                     const contact = motherContactsMap[motherName] || {};
-                    mothersHtml += '<div style="color: #1e293b; margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 0.375rem; border-left: 3px solid #3b82f6;">';
+                    mothersHtml += '<div style="color: #1e293b; margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 0.375rem; border-left: 3px solid #e11d48;">';
                     mothersHtml += '<strong style="font-size: 1.1rem;">👩 ' + motherName + '</strong><br>';
                     if (contact.email) mothersHtml += '<div style="font-size: 0.9rem; margin-top: 0.5rem;">📧 ' + contact.email + '</div>';
                     if (contact.phone) mothersHtml += '<div style="font-size: 0.9rem;">📱 ' + contact.phone + '</div>';
-                    mothersHtml += '<div style="margin-left: 0; margin-top: 0.75rem;"><strong style="font-size: 0.95rem;">Children missing attendance:</strong>';
-                    children.forEach(child => {
-                        mothersHtml += '<div style="margin-left: 1rem; margin-top: 0.25rem;">👶 ' + child + '</div>';
-                    });
-                    mothersHtml += '</div></div>';
+                    mothersHtml += '<div style="margin-top: 0.5rem; font-size: 0.85rem; color: #64748b;">⏳ <em>Follow up: Needs to submit child attendance</em></div>';
+                    mothersHtml += '</div>';
                 });
             }
 
@@ -2126,7 +2148,7 @@
                     <div class="summary">
                         <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
                         <p><strong>Children Missing Attendance:</strong> ${childrenWithNoAttendance.length} of ${childrenTotal} (${childrenPct}%)</p>
-                        <p><strong>Mothers with Missing Child Data:</strong> ${mothersWithChildrenMissingAttendance.length}</p>
+                        <p><strong>Mothers Still Need to Submit:</strong> ${mothersWithNoData.length} of 39</p>
                     </div>
 
                     <div class="section">
@@ -2472,7 +2494,7 @@
                 const rtEl = document.querySelector(`.rt-${k}`);
                 if (!wwEl || !piEl || !tntEl || !rtEl) return;
                 const ww = parseInt(wwEl.value) || 0, pi = parseInt(piEl.value) || 0, tnt = parseInt(tntEl.value) || 0, rt = parseInt(rtEl.value) || 0;
-                const tot = ww + pi + tnt + rt, pct = Math.round((tot / 68) * 100);
+                const tot = ww + pi + tnt + rt, pct = Math.round((tot / 71) * 100);
                 const wwPct = Math.round((ww / 13) * 100), piPct = Math.round((pi / 6) * 100), tntPct = Math.round((tnt / 14) * 100), rtPct = Math.round((rt / 35) * 100);
                 const wwPctEl = document.getElementById(`ww-pct-${k}`), piPctEl = document.getElementById(`pi-pct-${k}`), tntPctEl = document.getElementById(`tnt-pct-${k}`), rtPctEl = document.getElementById(`rt-pct-${k}`);
                 if (wwPctEl) wwPctEl.textContent = wwPct + '%';
