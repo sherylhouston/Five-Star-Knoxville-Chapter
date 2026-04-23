@@ -1134,7 +1134,7 @@
                             <th style="text-align: center;">RT (35)</th>
                             <th style="text-align: center;">RT %</th>
                             <th style="text-align: center;">Total</th>
-                            <th style="text-align: center;">% of Total</th>
+                            <th style="text-align: center;">% of 68</th>
                         </tr>
                     </thead>
                     <tbody id="activities-tbody"></tbody>
@@ -1318,28 +1318,24 @@
     <script>
         const SUPABASE_URL = 'https://eduqqsoyiipapkgctxme.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_WG_39AMSKru8AEvrJ8YTxg_bV80VJZC';
-        let supabaseClient = null;
 
-        // Wait for Supabase to load, then initialize
-        function initSupabase() {
+        // Supabase initialization - proper async handling
+        async function initSupabase() {
+            // Wait for Supabase library to load from CDN
+            let attempts = 0;
+            while (!window.supabase && attempts < 20) {
+                await new Promise(resolve => setTimeout(resolve, 50));
+                attempts++;
+            }
             if (window.supabase && window.supabase.createClient) {
-                try {
-                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                    console.log('✅ Supabase client initialized');
-                } catch (e) {
-                    console.error('❌ Supabase initialization error:', e);
-                }
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                console.log('✅ Supabase initialized successfully');
             } else {
-                console.log('⚠️ Supabase library not available yet');
+                console.error('❌ Supabase library failed to load from CDN');
             }
         }
+        let supabaseClient;
 
-        // Initialize immediately if available, otherwise wait
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initSupabase);
-        } else {
-            initSupabase();
-        }
 
         // Fallback hardcoded data (used in Test Mode)
         const fallbackMothers = ['Erika Allen', 'Leasa Woods Anderson', 'Vidya Barnes', 'Myisha Dorsey', 'Nayasha Farrior', 'Janera Felton', 'Chantrelle Harris', 'ReShanta Hazelbaker', 'Sheryl Houston', 'Adia Jackson', 'Eboni James', 'Sharon Jean-Philippe', 'LaTonya Jordan', 'Melba Kendrick', 'Natasha Leeth', 'Shalonda Kirk', 'Nikki Kitchen', 'Maria Loggins', 'Meshelle Lowery', 'Tiffany Malone', 'Kourtnie Moore', 'Summer Moore', 'Tiffani Moss', 'Althea Murphy-Price', 'Nicie Murphy', 'LaToya Myles', 'Clarice Phelps', 'Fanesha Powell', 'Danielle Procope Bell', 'Rekisha Rhyan', 'Aja Rosser', 'LaTonya Rudolph', 'Jada Russell', 'Brittonya Sparks', 'Jeanette Toney', 'Katatra Vasquez', 'Syreeta Vaughn', 'Kesha Waters', 'Shenika Welch-Charles'];
@@ -1392,40 +1388,6 @@
                 console.log('✅ Saved attendance data to storage');
             } catch (e) {
                 console.log('Could not save to localStorage:', e);
-            }
-        }
-
-        // Load attendance data from Supabase (syncs across devices)
-        async function loadAttendanceFromSupabase() {
-            if (!supabaseClient) {
-                console.log('⚠️ Supabase not connected, using localStorage only');
-                return;
-            }
-            try {
-                const { data, error } = await supabaseClient.from('submissions').select('*').order('submitted_at', { ascending: false });
-                if (error) throw error;
-                if (data && data.length > 0) {
-                    console.log('📥 Loading attendance from Supabase:', data.length, 'entries');
-                    // Group activities by child - ONLY KEEP MOST RECENT ENTRY PER CHILD
-                    childAttendanceData = {};
-                    const processedChildren = new Set();
-                    data.forEach(entry => {
-                        const childKey = entry.child_name + '|' + entry.age_group;
-                        // Only process each child once (first/most recent entry due to ordering)
-                        if (!processedChildren.has(childKey)) {
-                            if (entry.activities && Array.isArray(entry.activities)) {
-                                childAttendanceData[childKey] = entry.activities;
-                            }
-                            processedChildren.add(childKey);
-                        }
-                    });
-                    console.log('✅ Loaded', Object.keys(childAttendanceData).length, 'children from Supabase');
-                    saveAttendanceToLocalStorage(); // Also save to localStorage for offline access
-                } else {
-                    console.log('No attendance data in Supabase yet');
-                }
-            } catch (err) {
-                console.error('Could not load from Supabase:', err.message);
             }
         }
 
@@ -1939,7 +1901,7 @@
             refreshReminderData();
         }
 
-        async function generateMissingDataReport() {
+        function generateMissingDataReport() {
             console.log('Generating missing data report...');
             console.log('Current childAttendanceData:', childAttendanceData);
 
@@ -1977,43 +1939,27 @@
             childrenWithNoAttendance = [];
             const childrenByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
             const childrenNoAttendanceByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
+            const childSelect = document.getElementById('child-select');
+            if (childSelect) {
+                const options = childSelect.querySelectorAll('option');
+                options.forEach(opt => {
+                    if (opt.value) {
+                        const [childName, ageGroup] = opt.value.split('|');
+                        if (!childrenByAgeGroup[ageGroup]) childrenByAgeGroup[ageGroup] = [];
+                        childrenByAgeGroup[ageGroup].push(opt.value);
 
-            // Find children with NO attendance - load ALL 71 children from Supabase
-            childrenWithNoAttendance = [];
-            const childrenByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
-            const childrenNoAttendanceByAgeGroup = { WW: [], PI: [], TNT: [], RT: [] };
-
-            let allChildrenList = [];
-            if (supabaseClient) {
-                try {
-                    const { data: allChildren } = await supabaseClient
-                        .from('children')
-                        .select('child_name, age_group')
-                        .order('age_group, child_name');
-
-                    if (allChildren) {
-                        allChildrenList = allChildren.map(c => ({ childName: c.child_name, ageGroup: c.age_group }));
+                        // Check if this child has attendance recorded in childAttendanceData
+                        if (!childAttendanceData[opt.value]) {
+                            childrenWithNoAttendance.push({ childName, childValue: opt.value, ageGroup });
+                            if (!childrenNoAttendanceByAgeGroup[ageGroup]) childrenNoAttendanceByAgeGroup[ageGroup] = [];
+                            childrenNoAttendanceByAgeGroup[ageGroup].push(childName);
+                        }
                     }
-                } catch (e) {
-                    console.log('Error loading children from Supabase:', e);
-                }
+                });
             }
 
-            allChildrenList.forEach(({ childName, ageGroup }) => {
-                const childValue = `${childName}|${ageGroup}`;
-                if (!childrenByAgeGroup[ageGroup]) childrenByAgeGroup[ageGroup] = [];
-                childrenByAgeGroup[ageGroup].push(childValue);
-
-                // Check if this child has attendance recorded in childAttendanceData
-                if (!childAttendanceData[childValue]) {
-                    childrenWithNoAttendance.push({ childName, childValue, ageGroup });
-                    if (!childrenNoAttendanceByAgeGroup[ageGroup]) childrenNoAttendanceByAgeGroup[ageGroup] = [];
-                    childrenNoAttendanceByAgeGroup[ageGroup].push(childName);
-                }
-            });
-
             // Calculate child percentages
-            childrenTotal = allChildren.length; // Use actual count from Supabase
+            childrenTotal = 68;
             childrenPct = Math.round((childrenWithNoAttendance.length / childrenTotal) * 100);
             ageGroupTotals = { WW: 13, PI: 6, TNT: 14, RT: 35 };
             ageGroupPcts = {};
@@ -2507,7 +2453,7 @@
                 const rtEl = document.querySelector(`.rt-${k}`);
                 if (!wwEl || !piEl || !tntEl || !rtEl) return;
                 const ww = parseInt(wwEl.value) || 0, pi = parseInt(piEl.value) || 0, tnt = parseInt(tntEl.value) || 0, rt = parseInt(rtEl.value) || 0;
-                const tot = ww + pi + tnt + rt, pct = Math.round((tot / childrenTotal) * 100);
+                const tot = ww + pi + tnt + rt, pct = Math.round((tot / 68) * 100);
                 const wwPct = Math.round((ww / 13) * 100), piPct = Math.round((pi / 6) * 100), tntPct = Math.round((tnt / 14) * 100), rtPct = Math.round((rt / 35) * 100);
                 const wwPctEl = document.getElementById(`ww-pct-${k}`), piPctEl = document.getElementById(`pi-pct-${k}`), tntPctEl = document.getElementById(`tnt-pct-${k}`), rtPctEl = document.getElementById(`rt-pct-${k}`);
                 if (wwPctEl) wwPctEl.textContent = wwPct + '%';
@@ -2649,14 +2595,8 @@
                 alert('⚠️ ' + name + ' attendance recorded locally.\n\nTo save to database:\n1. Complete Supabase setup (April 22)\n2. Run the SQL scripts\n3. Refresh this page\n\nOr enable Test Mode at the top to test without Supabase.\n\nReady for another child? Select and submit again.');
             }
 
-            // Reload data from Supabase to ensure sync (handles both new entries and edits)
-            await loadAttendanceFromSupabase();
-
-            // Refresh ALL reports to show updated attendance
-            updateDashboard();
-            initActivities();
-            await generateMissingDataReport();
-            generateAttendanceDetailsReport();
+            // Refresh the missing data report to show updated attendance
+            generateMissingDataReport();
 
             e.target.reset();
             document.getElementById('age-group-display').style.display = 'none';
@@ -3195,6 +3135,10 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
+            // CRITICAL: Wait for Supabase to initialize first
+            await initSupabase();
+            console.log('Supabase client ready:', !!supabaseClient);
+
             // Load previously saved attendance data from browser storage
             loadAttendanceFromLocalStorage();
 
@@ -3210,9 +3154,6 @@
             // Load mothers from Supabase (or use fallback)
             await loadMothersFromSupabase();
 
-            // Load child attendance data from Supabase (syncs across devices)
-            await loadAttendanceFromSupabase();
-
             // Populate mother selectors across all tabs
             populateMotherSelectors();
 
@@ -3222,7 +3163,7 @@
             loadEvidenceList();
             updateDashboard();
             updateMeetingDashboard();
-            await generateMissingDataReport();
+            generateMissingDataReport();
             refreshReminderData();
             checkDatabaseStatus();
         });
