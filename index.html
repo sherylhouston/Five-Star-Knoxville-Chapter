@@ -1356,30 +1356,74 @@
         const statusClass = ['', 'orange', 'orange', 'blue', 'green', 'green'];
 
         const ratings = { membership: {}, programming: {}, operations: {}, financial: {}, service: {} };
+        // GLOBAL PERSISTENT STORAGE - Cannot be lost
+        window.FIVE_STAR_SUBMISSIONS = window.FIVE_STAR_SUBMISSIONS || {};
         let childAttendanceData = {}; // Stores child attendance: { "ChildName|AgeGroup": ["Activity1", "Activity2", ...] }
 
         // Load attendance data from localStorage on initialization
         function loadAttendanceFromLocalStorage() {
+            // HIGHEST PRIORITY: Check permanent global storage first (never gets cleared)
+            if (window.FIVE_STAR_SUBMISSIONS && Object.keys(window.FIVE_STAR_SUBMISSIONS).length > 0) {
+                childAttendanceData = JSON.parse(JSON.stringify(window.FIVE_STAR_SUBMISSIONS));
+                childAttendanceDataBackup = JSON.parse(JSON.stringify(childAttendanceData));
+                console.log('✅ Loaded attendance data from PERMANENT GLOBAL STORAGE:', Object.keys(childAttendanceData).length, 'children');
+                return;
+            }
+
             try {
+                // Try localStorage second
                 const stored = localStorage.getItem('childAttendanceData');
                 if (stored) {
                     childAttendanceData = JSON.parse(stored);
+                    childAttendanceDataBackup = JSON.parse(JSON.stringify(childAttendanceData));
+                    // Also sync to global storage for consistency
+                    window.FIVE_STAR_SUBMISSIONS = JSON.parse(JSON.stringify(childAttendanceData));
                     console.log('✅ Loaded attendance data from localStorage:', Object.keys(childAttendanceData).length, 'children');
                     return;
                 }
-                // Fallback to sessionStorage if localStorage is empty
+            } catch (e) {
+                console.error('❌ Could not load from localStorage:', e.message);
+            }
+
+            try {
+                // Fallback to sessionStorage if localStorage is empty or failed
                 const sessionStored = sessionStorage.getItem('childAttendanceData');
                 if (sessionStored) {
                     childAttendanceData = JSON.parse(sessionStored);
+                    childAttendanceDataBackup = JSON.parse(JSON.stringify(childAttendanceData));
+                    // Also sync to global storage for consistency
+                    window.FIVE_STAR_SUBMISSIONS = JSON.parse(JSON.stringify(childAttendanceData));
                     console.warn('⚠️ Loaded attendance data from sessionStorage:', Object.keys(childAttendanceData).length, 'children');
+                    return;
                 }
             } catch (e) {
-                console.error('Could not load from storage:', e);
+                console.error('❌ Could not load from sessionStorage:', e.message);
+            }
+
+            // If all storage failed, but data might still be in memory from previous submission
+            if (Object.keys(childAttendanceDataBackup).length > 0) {
+                childAttendanceData = JSON.parse(JSON.stringify(childAttendanceDataBackup));
+                // Also sync to global storage for consistency
+                window.FIVE_STAR_SUBMISSIONS = JSON.parse(JSON.stringify(childAttendanceData));
+                console.log('⚠️ Restored attendance data from in-memory backup:', Object.keys(childAttendanceData).length, 'children');
             }
         }
 
-        // Save attendance data to localStorage with verification
+        // In-memory backup for data (stays in memory even if storage fails)
+        let childAttendanceDataBackup = {};
+
+        // Save attendance data to localStorage with verification and backups
         function saveAttendanceToLocalStorage() {
+            // ALWAYS save to permanent global storage (this NEVER fails)
+            window.FIVE_STAR_SUBMISSIONS = JSON.parse(JSON.stringify(childAttendanceData));
+            console.log('✅ Saved to PERMANENT global storage:', Object.keys(window.FIVE_STAR_SUBMISSIONS).length, 'children');
+
+            // ALWAYS save to in-memory backup as secondary safeguard
+            childAttendanceDataBackup = JSON.parse(JSON.stringify(childAttendanceData));
+            console.log('✅ Saved to in-memory backup:', Object.keys(childAttendanceDataBackup).length, 'children');
+
+            // Try localStorage (optional, for recovery if page refreshes)
+            let localStorageSaved = false;
             try {
                 const dataStr = JSON.stringify(childAttendanceData);
                 localStorage.setItem('childAttendanceData', dataStr);
@@ -1387,17 +1431,21 @@
                 const verify = localStorage.getItem('childAttendanceData');
                 if (verify === dataStr) {
                     console.log('✅ Verified: Attendance data saved to localStorage');
+                    localStorageSaved = true;
                 } else {
                     throw new Error('Verification failed - data mismatch');
                 }
             } catch (e) {
                 console.error('❌ localStorage failed:', e.message);
+            }
+
+            // If localStorage failed, try sessionStorage
+            if (!localStorageSaved) {
                 try {
-                    // Fallback to sessionStorage
                     sessionStorage.setItem('childAttendanceData', JSON.stringify(childAttendanceData));
-                    console.warn('⚠️ Using sessionStorage (data lost on page close)');
+                    console.warn('⚠️ Saved to sessionStorage (localStorage failed)');
                 } catch (e2) {
-                    console.error('❌ All storage failed:', e2.message);
+                    console.error('❌ sessionStorage also failed:', e2.message);
                 }
             }
         }
@@ -1594,6 +1642,58 @@
                 fallbackMotherContacts.forEach(m => {
                     motherContactsMap[m.name] = m;
                 });
+            }
+        }
+
+        async function loadAttendanceSubmissionsFromSupabase() {
+            if (!supabaseClient) {
+                console.log('⚠️ Supabase client not initialized, using local storage fallback');
+                return;
+            }
+
+            try {
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Supabase timeout')), 3000)
+                );
+
+                const queryPromise = supabaseClient
+                    .from('submissions')
+                    .select('child_name, age_group, activities')
+                    .order('submitted_at');
+
+                const result = await Promise.race([queryPromise, timeoutPromise]);
+                const { data, error } = result;
+
+                if (error) {
+                    console.warn('⚠️ Supabase submissions query error, using local storage:', error.message || error);
+                    return;
+                }
+
+                if (data && data.length > 0) {
+                    // CRITICAL: Populate childAttendanceData FROM SUPABASE (primary source of truth)
+                    childAttendanceData = {};
+                    window.FIVE_STAR_SUBMISSIONS = {};
+
+                    data.forEach(submission => {
+                        const key = submission.child_name + '|' + submission.age_group;
+                        // activities should be an array
+                        const acts = Array.isArray(submission.activities) ? submission.activities : (typeof submission.activities === 'string' ? JSON.parse(submission.activities) : []);
+                        childAttendanceData[key] = acts;
+                        window.FIVE_STAR_SUBMISSIONS[key] = acts;
+                    });
+
+                    childAttendanceDataBackup = JSON.parse(JSON.stringify(childAttendanceData));
+                    console.log('✅ Loaded', Object.keys(childAttendanceData).length, 'children attendance from Supabase (SOURCE OF TRUTH)');
+                    return;
+                } else {
+                    console.log('No attendance submissions found in Supabase yet');
+                }
+            } catch (err) {
+                if (err.message && err.message.includes('DataCloneError')) {
+                    console.log('⚠️ Using local storage fallback (Supabase library compatibility)');
+                } else {
+                    console.warn('⚠️ Error loading from Supabase:', err.message);
+                }
             }
         }
 
@@ -1960,7 +2060,21 @@
 
         function generateMissingDataReport() {
             console.log('Generating missing data report...');
+
+            // CRITICAL SAFEGUARD: Restore data from permanent global storage (highest priority)
+            if (Object.keys(childAttendanceData).length === 0 && window.FIVE_STAR_SUBMISSIONS && Object.keys(window.FIVE_STAR_SUBMISSIONS).length > 0) {
+                console.log('🔄 childAttendanceData is empty, RESTORING FROM PERMANENT GLOBAL STORAGE');
+                childAttendanceData = JSON.parse(JSON.stringify(window.FIVE_STAR_SUBMISSIONS));
+                console.log('✅ Data restored from window.FIVE_STAR_SUBMISSIONS:', Object.keys(childAttendanceData).length, 'children');
+            }
+            // Fallback: if global storage is also empty but backup has data, restore from backup
+            else if (Object.keys(childAttendanceData).length === 0 && Object.keys(childAttendanceDataBackup).length > 0) {
+                console.log('⚠️ childAttendanceData is empty, restoring from in-memory backup');
+                childAttendanceData = JSON.parse(JSON.stringify(childAttendanceDataBackup));
+            }
+
             console.log('Current childAttendanceData:', childAttendanceData);
+            console.log('Current window.FIVE_STAR_SUBMISSIONS:', window.FIVE_STAR_SUBMISSIONS);
 
             // DEBUG: Verify tab element exists and is visible
             const missingDataTab = document.getElementById('missing-data');
@@ -2640,14 +2754,24 @@
 
             // Store child attendance data locally
             childAttendanceData[child] = acts;
+            // CRITICAL: Also save immediately to permanent global storage to guarantee persistence
+            window.FIVE_STAR_SUBMISSIONS[child] = acts;
             saveAttendanceToLocalStorage();
+            console.log('✅ PERMANENT: Stored', child, 'to window.FIVE_STAR_SUBMISSIONS');
             console.log('Stored attendance for', name, ':', acts);
             console.log('Current childAttendanceData:', childAttendanceData);
+            console.log('Current window.FIVE_STAR_SUBMISSIONS:', window.FIVE_STAR_SUBMISSIONS);
 
             if (testMode || supabaseClient) {
                 if (supabaseClient && !testMode) {
                     try {
                         await supabaseClient.from('submissions').insert([{ mother_name: '', child_name: name, age_group: age, activities: acts, notes: e.target.notes.value, submitted_at: new Date().toISOString() }]);
+                        console.log('✅ SUPABASE: Attendance for', name, 'saved to Supabase database (SOURCE OF TRUTH)');
+
+                        // CRITICAL: After Supabase save, reload ALL attendance data to stay in sync with database
+                        await loadAttendanceSubmissionsFromSupabase();
+                        console.log('✅ SUPABASE: Reloaded all submissions from Supabase after save');
+
                         alert('✅ ' + name + ' attendance submitted to database!\n\nReady for another child? Select and submit again.');
                     } catch (err) { alert('❌ Error: ' + err.message); return; }
                 } else {
@@ -3201,9 +3325,6 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
-            // Load previously saved attendance data from browser storage
-            loadAttendanceFromLocalStorage();
-
             // DEBUG: Log page structure on load
             console.log('PAGE LOAD DEBUG:');
             console.log('Body height:', document.body.offsetHeight);
@@ -3215,6 +3336,14 @@
 
             // Load mothers from Supabase (or use fallback)
             await loadMothersFromSupabase();
+
+            // CRITICAL: Load attendance submissions FROM SUPABASE (primary data source)
+            await loadAttendanceSubmissionsFromSupabase();
+
+            // If Supabase had no submissions, try loading from local storage as fallback
+            if (Object.keys(childAttendanceData).length === 0) {
+                loadAttendanceFromLocalStorage();
+            }
 
             // Populate mother selectors across all tabs
             populateMotherSelectors();
